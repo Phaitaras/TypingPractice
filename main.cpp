@@ -7,8 +7,11 @@ int main(){
 
     Game game{screenWidth, screenHeight, "Typing Game"};
 
+    std::cout << GetScreenWidth();
+
     while (!game.GameShouldClose()){
         game.Tick();
     }
+
     return 0;
 }

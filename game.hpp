@@ -9,6 +9,15 @@
 #include <string>
 #include <assert.h>
 
+enum GameState{titleScreen, gameScreen, endScreen};
+
+class TextBox{
+    public:
+    TextBox(int x, int y, char letter, Color color);
+    char letter;
+    bool matchInput();
+};
+
 class Game{
 public:
     Game(int width, int height, std::string gameTitle);
@@ -17,9 +26,10 @@ public:
     ~Game() noexcept;
     bool GameShouldClose() const;
     void Tick();
-private:
-    void Update();
-    void Draw();
+    int width, height;
+    GameState gameState;
+    std::vector<std::string> word_pool; // our 1000 word json
+    void DrawWordOnScreen(std::string random_word, int typing_index);
 };
 
 #endif
