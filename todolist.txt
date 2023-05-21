@@ -3,17 +3,21 @@ To-do??
         - read .json file
         - store in game class
 
-    2) Core Gameplay
-        - Start:
-            - isTitleScreen = false, isPlaying = true, isEndScreen = false
+    2) Game states: enum {isTitleScreen, isPlaying, isEndScreen}; 
+        2.1) Title Screen:
+            - gameState = isTitleScreen
+        
+        2.2) Gameplay:
+            - gameState = isPlaying
+
             - 60 sec Timer
                 - int time
                 - int frames
                 - frames++ (60 fps)
                 - if frame mod 60 -> time++
-                - if timer = 60 -> isTitleScreen = false, isPlaying = false, isEndScreen = true
+                - if timer = 60 -> gameState = isEndScreen
 
-            if (isPlaying)
+            case isPlaying:
                 - 2 words on screen
                     - Word class
                     - store the words as vector of vector of class Textbox
@@ -38,7 +42,8 @@ To-do??
                         - Add a new random word
                         - Move word to center
                         - Update score
-            
+
+        2.3) End Screen:
 
     3) modes
     4) ไรไม่รู้

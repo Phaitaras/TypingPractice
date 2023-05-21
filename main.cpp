@@ -10,15 +10,10 @@ int main(){
 
     Game game{screenWidth, screenHeight, "Typing Game"};
 
+    std::cout << GetScreenWidth();
+
     while (!game.GameShouldClose()){
         game.Tick();
     }
-
-    /*.json file located in build folder*/
-    std::ifstream i("test.json");
-    json j;
-    i >> j;
-    std::cout << j;
-    
     return 0;
 }
