@@ -1,7 +1,5 @@
 #include "game.hpp"
-#include <nlohmann/json.hpp>
 using namespace std;
-using json = nlohmann::json;
 
 // for convenience
 int main(){
@@ -15,5 +13,6 @@ int main(){
     while (!game.GameShouldClose()){
         game.Tick();
     }
+
     return 0;
 }
