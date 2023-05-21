@@ -23,9 +23,11 @@ if (NOT raylib_FOUND) # If there's none, fetch and build raylib
 endif()
 
 # Our Project
+add_subdirectory(nlohmann_json)
 add_executable(${PROJECT_NAME} main.cpp game.cpp)
 #set(raylib_VERBOSE 1)
 target_link_libraries(${PROJECT_NAME} raylib)
+target_link_libraries(${PROJECT_NAME} nlohmann_json::nlohmann_json)
 
 # Web Configurations
 if (${PLATFORM} STREQUAL "Web")
