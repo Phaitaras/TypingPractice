@@ -6,9 +6,9 @@ int main(){
         const int screenWidth = 1280;
         const int screenHeight = 720;
 
-        Game game{screenWidth, screenHeight, "Typing Game"};
+        GameScreen game{"Typing Game"};
 
-        while (!game.GameShouldClose()){
+        while (!game.GameScreenShouldClose()){
             game.Tick();
         }
 
