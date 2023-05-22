@@ -1,7 +1,7 @@
 #include "game.hpp"
 
 std::vector<std::string> json_vec(ns:: wordpool wp,std::string filename){
-    std::ifstream i(filename);
+    std::ifstream i("../" + filename);
     json json_file;
     i >> json_file;
 
