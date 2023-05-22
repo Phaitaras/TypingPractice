@@ -9,6 +9,7 @@
 #include <string>
 #include <assert.h>
 #include <nlohmann/json.hpp>
+
 using json = nlohmann::json;
 
 enum GameState{titleScreen, TypingTrials, TickingTimeBomb, endScreen};

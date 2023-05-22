@@ -54,12 +54,12 @@ void Game::DrawWordOnScreen(std::string current_word, int typing_index){
     for (int i = 0; i < current_word.size(); i++){
         int x_pos = (GetScreenWidth()/2) + (textBox_size * 3/2 * (i)) - (textBox_size * 3/4 * current_word.length() - textBox_size/4);
 
-        if (i == typing_index){
+        if (i == typing_index){ //highlighted letter textbox
             text.push_back(TextBox{x_pos, 280, current_word[i], textBox_color_highlighted});
             //border decoration it doesnt work wtf
             //DrawRectangleLines(x_pos, 280, textBox_size + 2, textBox_size + 2, Color{84, 218, 119});
         
-        } else {
+        } else { //normal letter textbox
             text.push_back(TextBox{x_pos, 300, current_word[i], textBox_color});
         }
     }
