@@ -1,10 +1,29 @@
 #include "game.hpp"
 
+std::vector<std::string> json_vec(ns:: wordpool wp,std::string filename){
+    std::ifstream i(filename);
+    json json_file;
+    i >> json_file;
+
+    wp.language = json_file["name"];
+
+    const auto& words = json_file["words"];
+    for (const auto& word : words) {
+        wp.words.push_back(word);
+    }
+
+    return wp.words;
+}
+
+
 Game::Game(int width, int height, std::string title): width(width), height(height), gameState(titleScreen){
     assert(!GetWindowHandle()); //Check if window has not been created
     InitWindow(width, height, title.c_str());
     SetTargetFPS(60);
-    this->word_pool = {"miki", "music", "putter", "monkey", "pooper", "fard", "ball", "bob", "drake"};
+
+    ns::wordpool eng;
+    this->word_pool = json_vec(eng, "words.json");
+
 }
 
 Game::~Game() noexcept {

@@ -8,8 +8,19 @@
 #include <vector>
 #include <string>
 #include <assert.h>
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
 
 enum GameState{titleScreen, TypingTrials, TickingTimeBomb, endScreen};
+
+namespace ns {
+    struct wordpool {
+        std::string language;
+        std::vector<std::string> words;
+    };
+}
+
+std::vector<std::string> json_vec(std::string filename);
 
 class TextBox{
     public:
