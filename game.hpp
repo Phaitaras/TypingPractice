@@ -9,7 +9,7 @@
 #include <string>
 #include <assert.h>
 
-enum GameState{titleScreen, gameScreen, endScreen};
+enum GameState{titleScreen, TypingTrials, TickingTimeBomb, endScreen};
 
 class TextBox{
     public:
