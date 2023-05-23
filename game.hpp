@@ -59,13 +59,7 @@ public:
     void setCurrentWord(std::string w) { currentWord = w; }
     void setNextWord(std::string w) {nextWord = w; }
     bool typedLetter(char w);
-    void typedWord() {
-        ++wordTyped;
-        wpm = (int) wordTyped * 3600 / (3600 - frames);
-        typingIndex = 0;
-        setCurrentWord(nextWord);
-        setNextWord(getRandomWord(wordPool));
-    }
+    void typedWord();
     void framesCount() { --frames; }
     int getFrames() {return frames; }
     std::string getCurrentWord() {return currentWord; }
@@ -76,6 +70,7 @@ public:
     void addTypingIndex() { ++typingIndex; }
     void addWordTyped() { ++wordTyped; }
     void addLettersTyped() { ++lettersTyped; }
+    void DrawWordOnScreen(std::string random_word, int typing_index);
 
 protected:
     int typingIndex;
@@ -96,8 +91,8 @@ public:
     Game& operator=(const Game& other) = delete;
     ~Game() noexcept;
     bool GameShouldClose() const;
-    void Tick(std::vector<MainScreen> mains, std::vector<GameScreen> modes);
-    void DrawWordOnScreen(std::string random_word, int typing_index);
+    void Tick(std::vector<MainScreen>& mains, std::vector<GameScreen>& modes);
+    // void DrawWordOnScreen(std::string random_word, int typing_index);
 protected:
     int width, height;
     GameState gameState;
