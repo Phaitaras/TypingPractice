@@ -1,13 +1,14 @@
 #include "game.hpp"
 
-std::vector<std::string> json_vec(ns:: wordpool wp,std::string filename){
-    std::ifstream i("../" + filename);
-    json json_file;
-    i >> json_file;
+//json vec
+std::vector<std::string> jsonVec(ns::wordpool wp, std::string fileName){
+    std::ifstream i(fileName);
+    json jsonFile;
+    i >> jsonFile;
 
-    wp.language = json_file["name"];
+    wp.language = jsonFile["name"];
 
-    const auto& words = json_file["words"];
+    const auto& words = jsonFile["words"];
     for (const auto& word : words) {
         wp.words.push_back(word);
     }
@@ -15,14 +16,14 @@ std::vector<std::string> json_vec(ns:: wordpool wp,std::string filename){
     return wp.words;
 }
 
-
+//Game Functions
 Game::Game(int width, int height, std::string title): width(width), height(height), gameState(titleScreen){
     assert(!GetWindowHandle()); //Check if window has not been created
     InitWindow(width, height, title.c_str());
     SetTargetFPS(60);
 
     ns::wordpool eng;
-    this->word_pool = json_vec(eng, "words.json");
+    this->word_pool = jsonVec(eng, "../TypingPractice/words.json");
 
 }
 
@@ -35,65 +36,131 @@ bool Game::GameShouldClose() const {
     return WindowShouldClose();
 }
 
-
-
 //themes
-const int textBox_size = 60;
-const Color textBox_color = Color{186, 255, 204, 255};
-const Color textBox_color_highlighted = Color{166, 247, 187, 255};
+const int textBoxSize = 60;
+const Color textBoxColor = Color{186, 255, 204, 255};
+const Color textBoxColorHighlighted = Color{166, 247, 187, 255};
 const Color textColor = Color{44, 115, 62, 255};
 
 TextBox::TextBox(int x, int y, char letter, Color color): letter(letter){
-    DrawRectangle(x, y, textBox_size, textBox_size, color);
-    DrawText(std::string(1, letter).c_str(), x-7+textBox_size/2, y-15+textBox_size/2, textBox_size/2, textColor);
+    DrawRectangle(x, y, textBoxSize, textBoxSize, color);
+    DrawText(std::string(1, letter).c_str(), x-7+textBoxSize/2, y-15+textBoxSize/2, textBoxSize/2, textColor);
 }
 
 void Game::DrawWordOnScreen(std::string current_word, int typing_index){
     std::vector<TextBox> text;
 
     for (int i = 0; i < current_word.size(); i++){
-        int x_pos = (GetScreenWidth()/2) + (textBox_size * 3/2 * (i)) - (textBox_size * 3/4 * current_word.length() - textBox_size/4);
+        int x_pos = (GetScreenWidth()/2) + (textBoxSize * 3/2 * (i)) - (textBoxSize * 3/4 * current_word.length() - textBoxSize/4);
 
         if (i == typing_index){ //highlighted letter textbox
-            text.push_back(TextBox{x_pos, 280, current_word[i], textBox_color_highlighted});
+            text.push_back(TextBox{x_pos, 280, current_word[i], textBoxColorHighlighted});
             //border decoration it doesnt work wtf
             //DrawRectangleLines(x_pos, 280, textBox_size + 2, textBox_size + 2, Color{84, 218, 119});
         
         } else { //normal letter textbox
-            text.push_back(TextBox{x_pos, 300, current_word[i], textBox_color});
+            text.push_back(TextBox{x_pos, 300, current_word[i], textBoxColor});
         }
     }
 }
 
-std::string test;
-std::string current_word, next_word;
-int typing_index;
-int key;
-bool correctInput;
-int wpm, word_typed, letters_typed, incorrect_letters;
+//Screen Functions
+Screen::Screen(int w, int h) {
+    width = w;
+    height = h;
+}
+
+//MainScreen Functions
+void MainScreen::draw() {
+        ClearBackground(WHITE);
+        DrawText(msg.c_str(), width/2, height/2, 20, textColor);
+}
+
+//GameScreen Functions
+GameScreen::GameScreen(): Screen() {
+        typingIndex = 0;
+        wpm = 0;
+        wordTyped = 0;
+        frames = 3600;
+        lettersTyped = 0;
+}
+GameScreen::GameScreen(int index, int speed, int typed, int f, int w, int h): Screen(w, h) {
+    typingIndex = index;
+    wpm = speed;
+    wordTyped = typed;
+    frames = f;
+}
+GameScreen::GameScreen(int index, int speed, int typed, int f): Screen() {
+    typingIndex = index;
+    wpm = speed;
+    wordTyped = typed;
+    frames = f;
+}
+
+std::string GameScreen::getRandomWord(std::vector<std::string> wordPool) {
+    return wordPool[GetRandomValue(0, wordPool.size() - 1)];
+}
+
+void GameScreen::draw() {
+    BeginDrawing();
+        ClearBackground(Color{210, 248, 249});
+
+        //background
+        DrawRectangle(0, height/2 - 10, 1280, 20, Color{134, 234, 167, 255});
+        DrawRectangle(0, height/2 + 10, 1280, 500, Color{115, 216, 149, 255});
+
+        //timer bar
+        DrawRectangleLines(width/2 - 180, 420, 368, 28, textColor);
+        DrawRectangle(width/2 - 176, 424, frames / 10, 20, textColor);
+
+        //next word
+        DrawText(
+            TextFormat("Next Word: %s", nextWord.c_str()),
+            width/2 - MeasureText(TextFormat("Next Word: %s", nextWord.c_str()), 20)/2,
+            height/2 + 30, 20, textColor
+        );
+        //wpm
+        DrawText(TextFormat("WPM: %d", wpm), width/2 - 180, height/2 + 100, 20, textColor);
+        //count
+        DrawText(
+            TextFormat("Score: %d", wordTyped),
+            width/2 + 188 - MeasureText(TextFormat("Score: %d", wordTyped), 20),
+            height/2 + 100, 20, textColor
+        );
+
+    EndDrawing();
+}
+
+bool GameScreen::typedLetter(char w) { 
+    return w == currentWord[typingIndex] || w == currentWord[typingIndex] - 32;
+}
+
+int incorrectLetters;
+char key;
 int frames;
 
-void Game::Tick(){
+
+
+void Game::Tick(std::vector<MainScreen> mains, std::vector<GameScreen> modes) {
     //Update all
     //...
 
     switch (gameState){
         case titleScreen:
         // Update ----------------------------------------------------------------------------------
-            test = "title screen, space to go game";
-
             if (IsKeyPressed(KEY_SPACE)){
                 gameState = TypingTrials;
-                typing_index, wpm, word_typed = 0;
-                frames = 3600; //60 second
-                current_word = word_pool[GetRandomValue(0, word_pool.size() - 1)];
-                next_word = word_pool[GetRandomValue(0, word_pool.size() - 1)];
+                modes[0].setCurrentWord(modes[0].getRandomWord(word_pool));
+                modes[0].setNextWord(modes[0].getRandomWord(word_pool));
+            }
+
+            if (IsKeyPressed(KEY_Q)) {
+                gameState = endScreen;
             }
 
         // Drawing ---------------------------------------------------------------------------------
             BeginDrawing();
-                ClearBackground(WHITE);
-                DrawText(test.c_str(), width/2, height/2, 20, textColor);
+                mains[0].draw();
             EndDrawing();
             break;
 
@@ -101,10 +168,12 @@ void Game::Tick(){
         case TypingTrials:
         // Update ----------------------------------------------------------------------------------
             key = GetCharPressed();
-            frames--;
+
+            // frames -= 1
+            modes[0].framesCount();
 
             //timer: 60 seconds (60fps)
-            if (frames <= 0){
+            if (modes[0].getFrames() < 0){
                 gameState = endScreen;
             }
 
@@ -112,24 +181,22 @@ void Game::Tick(){
             if (IsKeyPressed(KEY_LEFT_SHIFT)) gameState = endScreen;
 
             //check if key input = index of the current letter
-            if (key == current_word[typing_index] || key == current_word[typing_index] - 32){
-                typing_index++;
-                letters_typed++;
-            } else if (key > 0){
-                incorrect_letters++;
+            if (modes[0].typedLetter(key)) {
+                modes[0].addLettersTyped();
+                modes[0].addTypingIndex();
+            } else if (key > 0) {
+                ++incorrectLetters;
             }
 
             //reset index and random a new word
-            if (typing_index >= current_word.size()){
-                word_typed++;
-                wpm = (int) word_typed * 3600 / (3600 - frames);
-                typing_index = 0;
-                current_word = next_word;
-                next_word = word_pool[GetRandomValue(0, word_pool.size() - 1)];
+            modes[0].typedWord();
+            if (modes[0].getTypingIndex() > modes[0].getCurrentWord().size()) {
+                modes[0].typedWord();
             }
 
         // Drawing ---------------------------------------------------------------------------------
             BeginDrawing();
+                // modes[0].draw();
                 ClearBackground(Color{210, 248, 249});
 
                 //background
@@ -138,38 +205,40 @@ void Game::Tick(){
 
                 //timer bar
                 DrawRectangleLines(width/2 - 180, 420, 368, 28, textColor);
-                DrawRectangle(width/2 - 176, 424, frames / 10, 20, textColor);
+                DrawRectangle(width/2 - 176, 424, modes[0].getFrames()/ 10, 20, textColor);
 
                 //next word
                 DrawText(
-                    TextFormat("Next Word: %s", next_word.c_str()),
-                    width/2 - MeasureText(TextFormat("Next Word: %s", next_word.c_str()), 20)/2,
+                    TextFormat("Next Word: %s", modes[0].getNextWord().c_str()),
+                    width/2 - MeasureText(TextFormat("Next Word: %s", modes[0].getNextWord().c_str()), 20)/2,
                     height/2 + 30, 20, textColor
                 );
+                
                 //wpm
-                DrawText(TextFormat("WPM: %d", wpm), width/2 - 180, height/2 + 100, 20, textColor);
+                DrawText(
+                    TextFormat("WPM: %d", modes[0].getWordsTyped()), width/2 - 180, height/2 + 100, 20, textColor
+                );
                 //count
                 DrawText(
-                    TextFormat("Score: %d", word_typed),
-                    width/2 + 188 - MeasureText(TextFormat("Score: %d", word_typed), 20),
+                    TextFormat("Score: %d",modes[0].getWordsTyped()),
+                    width/2 + 188 - MeasureText(TextFormat("Score: %d", modes[0].getWordsTyped()), 20),
                     height/2 + 100, 20, textColor
                 );
 
-                DrawWordOnScreen(current_word, typing_index);
-                
-
+                DrawWordOnScreen(modes[0].getCurrentWord(), modes[0].getTypingIndex());
+            
             EndDrawing();
             break;
 
-
         case endScreen:
-        // Update ----------------------------------------------------------------------------------
-            test = "end screen";
 
+        // Update ----------------------------------------------------------------------------------
+            if (IsKeyPressed(KEY_A)) {
+                gameState = titleScreen;
+            }
         // Drawing ---------------------------------------------------------------------------------
             BeginDrawing();
-                ClearBackground(RAYWHITE);
-                DrawText(test.c_str(), width/2, height/2, 20, BLACK);
+                mains[1].draw();
             EndDrawing();
             break;
     }
