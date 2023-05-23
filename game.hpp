@@ -12,6 +12,8 @@
 
 using json = nlohmann::json;
 
+enum GameState{titleScreen, TypingTrials, TickingTimeBomb, endScreen};
+
 namespace ns {
     struct wordpool {
         std::string language;
@@ -28,39 +30,18 @@ class TextBox{
     bool matchInput();
 };
 
-class GameScreen{
+class Game{
 public:
-    GameScreen() {}
-    GameScreen(std::string Title);
-    GameScreen(const GameScreen& other) = delete;
-    GameScreen& operator=(const GameScreen& other) = delete;
-    ~GameScreen() noexcept;
-    bool GameScreenShouldClose() const;
-    virtual void Tick();
-    void DrawWordOnScreen(std::string random_word, int typing_index);
-    std::string GetRandomWord();
-protected:
-    const int width = 1280;
-    const int height = 720;
-    std::string titlereal;
+    Game(int width, int height, std::string gameTitle);
+    Game(const Game& other) = delete;
+    Game& operator=(const Game& other) = delete;
+    ~Game() noexcept;
+    bool GameShouldClose() const;
+    void Tick();
+    int width, height;
+    GameState gameState;
     std::vector<std::string> word_pool; // our 1000 word json
-};
-
-class TypingTrials: public GameScreen{
-public:
-    TypingTrials(): TypingIndex(0), Wpm(0), WordTyped(0), Frames(3600) {}
-    TypingTrials(int Index, int Speed, int Typed, int Frames); 
-    void Tick();
-protected:
-    int TypingIndex;
-    int Wpm;
-    int WordTyped;
-    int Frames;
-};
-
-class EndScreen: public GameScreen{
-public:
-    void Tick();
+    void DrawWordOnScreen(std::string random_word, int typing_index);
 };
 
 #endif
