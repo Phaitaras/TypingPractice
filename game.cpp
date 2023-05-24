@@ -47,6 +47,47 @@ TextBox::TextBox(int x, int y, char letter, Color color): letter(letter){
     DrawText(std::string(1, letter).c_str(), x-7+textBoxSize/2, y-15+textBoxSize/2, textBoxSize/2, textColor);
 }
 
+void TypingTrials::drawScore() {
+    BeginDrawing();
+        ClearBackground(WHITE);
+
+        //bg rectangle
+        DrawRectangle(
+            width/2 - (MeasureText(TextFormat("Incorrect Letters: %d", incorrectLetters), 40)/2 + 40),
+            height/2 - 260,
+            (MeasureText(TextFormat("Incorrect Letters: %d", incorrectLetters), 40)) + 80,
+            height/2 + 40, PURPLE
+        );
+
+        DrawText(
+            TextFormat("Score"),
+            (width/2) - (MeasureText(TextFormat("Score"), 60)/2),
+            height/2 - 180, 60, WHITE
+        );
+
+        //incorrect words
+        DrawText(
+            TextFormat("Incorrect Letters: %d", incorrectLetters),
+            (width/2) - (MeasureText(TextFormat("Incorrect Letters: %d", incorrectLetters), 40)/2),
+            height/2 - 40, 40, textColor
+        );
+
+        //wpm
+        DrawText(
+            TextFormat("WPM: %d", wpm),
+            (width/2) - (MeasureText(TextFormat("WPM: %d", wpm), 40)/2),
+            height/2 - 80, 40, textColor
+        );
+
+        //count
+        DrawText(
+            TextFormat("Score: %d", wordTyped),
+            (width/2) - (MeasureText(TextFormat("Score: %d", wordTyped), 40)/2),
+            height/2, 40, textColor
+        );
+
+    EndDrawing();
+}
 
 //Screen Functions
 Screen::Screen(int w, int h) {
@@ -168,7 +209,7 @@ void TypingTrials::update(char key) {
         addLettersTyped();
         addTypingIndex();
     }
-    else {
+    else if (key > 0 && !timesUp()) {
         ++incorrectLetters;
     }
 
@@ -197,6 +238,7 @@ void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen*>& modes)
                 gameState = endScreen;
             }
 
+
         // Drawing ---------------------------------------------------------------------------------
             mains[0].draw();
             break;
@@ -213,15 +255,18 @@ void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen*>& modes)
 
             //timer: 60 seconds (60fps)
             if (tt->timesUp()){
-                gameState = endScreen;
+                tt->drawScore();
+            } else {
+                tt ->draw();
             }
 
             //force quit
             if (IsKeyPressed(KEY_LEFT_SHIFT)) gameState = endScreen;
 
+            if (IsKeyPressed(KEY_E)) gameState = skipped;
 
         // Drawing ---------------------------------------------------------------------------------
-            tt->draw();
+            // tt->draw();
             break;
 
         case endScreen:
@@ -234,6 +279,11 @@ void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen*>& modes)
         // Drawing ---------------------------------------------------------------------------------
             mains[1].draw();
             break;
+
+        case skipped:
+            modes[0]->drawScore();
+            break;
+
     }  
 
 

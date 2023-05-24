@@ -12,7 +12,7 @@
 
 using json = nlohmann::json;
 
-enum GameState{titleScreen, mode1, TickingTimeBomb, endScreen};
+enum GameState{titleScreen, mode1, mode2, endScreen, skipped};
 
 namespace ns {
     struct wordpool {
@@ -73,7 +73,7 @@ public:
     virtual void draw() = 0;
     virtual void framesCount() = 0;
     virtual void update(char key) = 0;
-    virtual void scorescreen() = 0;
+    virtual void drawScore() = 0;
 protected:
     int typingIndex;
     int wpm;
@@ -94,7 +94,7 @@ public:
     void draw();
     void framesCount() { --frames; }
     void update(char key);
-    void scorescreen();
+    void drawScore();
 };
 
 class Game{
