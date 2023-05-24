@@ -12,7 +12,7 @@
 
 using json = nlohmann::json;
 
-enum GameState{titleScreen, TypingTrials, TickingTimeBomb, endScreen};
+enum GameState{titleScreen, mode1, TickingTimeBomb, endScreen};
 
 namespace ns {
     struct wordpool {
@@ -24,10 +24,9 @@ namespace ns {
 std::vector<std::string> jsonVec(ns::wordpool ns, std::string filename);
 
 class TextBox{
-    public:
+public:
     TextBox(int x, int y, char letter, Color color);
     char letter;
-    bool matchInput();
 };
 
 class Screen{
@@ -39,6 +38,7 @@ protected:
     int width, height;
 };
 
+//screen for displaying messages or info
 class MainScreen: public Screen{
 public:
     MainScreen(): Screen() { msg = ""; }
@@ -54,34 +54,47 @@ public:
     GameScreen();
     GameScreen(int index, int speed, int typed, int f, int w, int h);
     GameScreen(int index, int speed, int typed, int f);
-    void draw();
     std::string getRandomWord(std::vector<std::string> wordPool);
+    //random current/next?
     void setCurrentWord(std::string w) { currentWord = w; }
-    void setNextWord(std::string w) {nextWord = w; }
+    void setNextWord(std::string w) { nextWord = w; }
     bool typedLetter(char w);
     void typedWord();
-    void framesCount() { --frames; }
-    int getFrames() {return frames; }
-    std::string getCurrentWord() {return currentWord; }
-    std::string getNextWord() {return nextWord; }
-    char getCurrentLetter() { return currentWord[typingIndex]; }
-    int getTypingIndex() {return typingIndex; }
+    bool timesUp();
+    int getFrames() { return frames; }
+    std::string getCurrentWord() { return currentWord; }
+    std::string getNextWord() { return nextWord; }
+    int getTypingIndex() { return typingIndex; }
     int getWordsTyped() { return wordTyped; }
     void addTypingIndex() { ++typingIndex; }
     void addWordTyped() { ++wordTyped; }
     void addLettersTyped() { ++lettersTyped; }
     void DrawWordOnScreen(std::string random_word, int typing_index);
-
+    virtual void draw() = 0;
+    virtual void framesCount() = 0;
+    virtual void update(char key) = 0;
+    virtual void scorescreen() = 0;
 protected:
     int typingIndex;
     int wpm;
+    int incorrectLetters;
     int wordTyped;
     int lettersTyped;
-    int incorrectLetters;
     int frames;
     std::string currentWord;
     std::string nextWord;
     std::vector<std::string> wordPool;
+};
+
+
+
+class TypingTrials: public GameScreen{
+public:
+    TypingTrials();
+    void draw();
+    void framesCount() { --frames; }
+    void update(char key);
+    void scorescreen();
 };
 
 class Game{
@@ -91,8 +104,7 @@ public:
     Game& operator=(const Game& other) = delete;
     ~Game() noexcept;
     bool GameShouldClose() const;
-    void Tick(std::vector<MainScreen>& mains, std::vector<GameScreen>& modes);
-    // void DrawWordOnScreen(std::string random_word, int typing_index);
+    void Tick(std::vector<MainScreen>& mains, std::vector<GameScreen*>& modes);
 protected:
     int width, height;
     GameState gameState;

@@ -6,12 +6,13 @@ int main(){
         const int screenWidth = 1280;
         const int screenHeight = 720;
         MainScreen startingScreen = MainScreen("SPACE");
-        GameScreen typingTrials = GameScreen();
+        TypingTrials typingTrials = TypingTrials();
         MainScreen endingScreen = MainScreen("THE END");
 
         Game game{screenWidth, screenHeight, "Typing Game"};
         std::vector<MainScreen> mains = {startingScreen, endingScreen};
-        std::vector<GameScreen> modes = {typingTrials};
+        std::vector<GameScreen*> modes;
+        modes.push_back(&typingTrials);
 
         while (!game.GameShouldClose()){
             game.Tick(mains, modes);

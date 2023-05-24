@@ -23,7 +23,7 @@ Game::Game(int width, int height, std::string title): width(width), height(heigh
     SetTargetFPS(60);
 
     ns::wordpool eng;
-    this->word_pool = jsonVec(eng, "../TypingPractice/words.json");
+    this->word_pool = jsonVec(eng, "../words.json");
 
 }
 
@@ -38,9 +38,9 @@ bool Game::GameShouldClose() const {
 
 //themes
 const int textBoxSize = 60;
-const Color textBoxColor = Color{186, 255, 204, 255};
-const Color textBoxColorHighlighted = Color{166, 247, 187, 255};
-const Color textColor = Color{44, 115, 62, 255};
+const Color textBoxColor = Color{227, 226, 254, 255};
+const Color textBoxColorHighlighted = Color{180, 177, 255, 255};
+const Color textColor = Color{117, 79, 186, 255};
 
 TextBox::TextBox(int x, int y, char letter, Color color): letter(letter){
     DrawRectangle(x, y, textBoxSize, textBoxSize, color);
@@ -63,10 +63,10 @@ void MainScreen::draw() {
 }
 
 //GameScreen Functions
-GameScreen::GameScreen() : Screen(), typingIndex(0), wpm(0), wordTyped(0), frames(3600), lettersTyped(0), incorrectLetters(0) {
+GameScreen::GameScreen() : Screen(), typingIndex(0), wpm(0), wordTyped(0), frames(0), lettersTyped(0), incorrectLetters(0) {
     SetTargetFPS(60);
     ns::wordpool eng;
-    this->wordPool = jsonVec(eng, "../TypingPractice/words.json");
+    this->wordPool = jsonVec(eng, "../words.json");
     setCurrentWord(getRandomWord(wordPool));
     setNextWord(getRandomWord(wordPool));
 }
@@ -75,10 +75,15 @@ GameScreen::GameScreen(int index, int speed, int typed, int f, int w, int h)
     : Screen(w, h), typingIndex(index), wpm(speed), wordTyped(typed), lettersTyped(0), incorrectLetters(0), frames(f) {
     SetTargetFPS(60);
     ns::wordpool eng;
-    this->wordPool = jsonVec(eng, "../TypingPractice/words.json");
+    this->wordPool = jsonVec(eng, "../words.json");
     setCurrentWord(getRandomWord(wordPool));
     setNextWord(getRandomWord(wordPool));
 }
+
+GameScreen::GameScreen(int index, int speed, int typed, int f)
+    : Screen(), typingIndex(index), wpm(speed), wordTyped(typed), lettersTyped(0), incorrectLetters(0), frames(f) {
+        
+};
 
 void GameScreen::DrawWordOnScreen(std::string current_word, int typing_index){
     std::vector<TextBox> text;
@@ -101,13 +106,34 @@ std::string GameScreen::getRandomWord(std::vector<std::string> wordPool) {
     return wordPool[GetRandomValue(0, wordPool.size() - 1)];
 }
 
-void GameScreen::draw() {
+bool GameScreen::typedLetter(char w) { 
+    return w == currentWord[typingIndex] || w == currentWord[typingIndex] - 32;
+}
+
+void GameScreen::typedWord(){
+    ++wordTyped;
+    wpm = (int)wordTyped * 3600 / (3600 - frames);
+    typingIndex = 0;
+    setCurrentWord(nextWord);
+    setNextWord(getRandomWord(wordPool));
+}
+
+TypingTrials::TypingTrials() : GameScreen() {
+    frames = 3600;
+    SetTargetFPS(60);
+    ns::wordpool eng;
+    this->wordPool = jsonVec(eng, "../words.json");
+    setCurrentWord(getRandomWord(wordPool));
+    setNextWord(getRandomWord(wordPool));
+} 
+
+void TypingTrials::draw(){
     BeginDrawing();
     ClearBackground(Color{210, 248, 249});
 
     //background
-    DrawRectangle(0, height/2 - 10, 1280, 20, Color{134, 234, 167, 255});
-    DrawRectangle(0, height/2 + 10, 1280, 500, Color{115, 216, 149, 255});
+    DrawRectangle(0, height/2 - 10, 1280, 20, Color{179, 149, 230, 255});
+    DrawRectangle(0, height/2 + 10, 1280, 500, Color{244, 220, 242, 255});
 
     //timer bar
     DrawRectangleLines(width/2 - 180, 420, 368, 28, textColor);
@@ -132,36 +158,39 @@ void GameScreen::draw() {
     EndDrawing();
 }
 
-bool GameScreen::typedLetter(char w) { 
-    return w == currentWord[typingIndex] || w == currentWord[typingIndex] - 32;
+bool GameScreen::timesUp() {
+    return frames < 0;
 }
 
-void GameScreen::typedWord(){
-    ++wordTyped;
-    wpm = (int)wordTyped * 3600 / (3600 - frames);
-    typingIndex = 0;
-    setCurrentWord(nextWord);
-    setNextWord(getRandomWord(wordPool));
+void TypingTrials::update(char key) {
+    framesCount();
+    if (typedLetter(key)) {
+        addLettersTyped();
+        addTypingIndex();
+    }
+    else {
+        ++incorrectLetters;
+    }
+
+    if(typingIndex >= currentWord.size()) {
+        typedWord();
+    } 
 }
 
-
-int incorrectLetters;
 char key;
-int frames;
 
-
-
-void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen>& modes) {
+void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen*>& modes) {
     //Update all
     //...
+    GameScreen* tt = modes[0];
 
     switch (gameState){
         case titleScreen:
         // Update ----------------------------------------------------------------------------------
             if (IsKeyPressed(KEY_SPACE)){
-                gameState = TypingTrials;
-                modes[0].setCurrentWord(modes[0].getRandomWord(word_pool));
-                modes[0].setNextWord(modes[0].getRandomWord(word_pool));
+                gameState = mode1;
+                modes[0]->setCurrentWord(modes[0]->getRandomWord(word_pool));
+                modes[0]->setNextWord(modes[0]->getRandomWord(word_pool));
             }
 
             if (IsKeyPressed(KEY_Q)) {
@@ -173,36 +202,26 @@ void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen>& modes) 
             break;
 
 
-        case TypingTrials:
+        case mode1:
         // Update ----------------------------------------------------------------------------------
             key = GetCharPressed();
 
+            tt->update(key);
+
             // frames -= 1
-            modes[0].framesCount();
+            tt->framesCount();
 
             //timer: 60 seconds (60fps)
-            if (modes[0].getFrames() < 0){
+            if (tt->timesUp()){
                 gameState = endScreen;
             }
 
             //force quit
             if (IsKeyPressed(KEY_LEFT_SHIFT)) gameState = endScreen;
 
-            //check if key input = index of the current letter
-            if (modes[0].typedLetter(key)) {
-                modes[0].addLettersTyped();
-                modes[0].addTypingIndex();
-            } else if (key > 0) {
-                ++incorrectLetters;
-            }
-
-            //reset index and random a new word
-            if (modes[0].getTypingIndex() >= modes[0].getCurrentWord().size()) {
-                modes[0].typedWord();
-            }
 
         // Drawing ---------------------------------------------------------------------------------
-            modes[0].draw();
+            tt->draw();
             break;
 
         case endScreen:
@@ -219,3 +238,4 @@ void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen>& modes) 
 
 
 }
+
