@@ -43,9 +43,19 @@ class MainScreen: public Screen{
 public:
     MainScreen(): Screen() { msg = ""; }
     MainScreen(std::string t): Screen() { msg = t; }
+    bool buttonMode1Clicked();
+    bool buttonMode2Clicked();
     void draw(std::vector<Texture2D> textures, Font font);
+
+
 protected:
     std::string msg;
+private:
+    Rectangle buttonMode1 = {(width/2) - 100, (height/2) - 40, 200, 50};
+    Rectangle buttonMode2 = {(width/2) - 100, (height/2) + 40, 200, 50};
+    bool buttonPressedMode1 = false;
+    bool buttonPressedMode2 = false;
+
 
 };
 
@@ -75,7 +85,7 @@ public:
     virtual void draw(std::vector<Texture2D> textures, Font font) = 0;
     virtual void framesCount() = 0;
     virtual void update(char key) = 0;
-    virtual void drawScore(Font font) = 0;
+    virtual void drawScore(std::vector<Texture2D> textures, Font font) = 0;
 protected:
     int typingIndex;
     int idleIndex = 0;
@@ -98,7 +108,7 @@ public:
     void draw(std::vector<Texture2D> textures, Font font);
     void framesCount() { --frames; }
     void update(char key);
-    void drawScore(Font font);
+    void drawScore(std::vector<Texture2D> textures, Font font);
 };
 
 class Game{

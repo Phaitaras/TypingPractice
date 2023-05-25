@@ -5,9 +5,9 @@ using namespace std;
 int main(){
         const int screenWidth = 1280;
         const int screenHeight = 720;
-        MainScreen startingScreen = MainScreen("SPACE");
+        MainScreen startingScreen = MainScreen();
         TypingTrials typingTrials = TypingTrials();
-        MainScreen endingScreen = MainScreen("THE END");
+        MainScreen endingScreen = MainScreen("RETRY ?");
 
         Game game{screenWidth, screenHeight, "Typing Game"};
         std::vector<MainScreen> mains = {startingScreen, endingScreen};

@@ -65,14 +65,18 @@ Vector2 XYtoVector2(int x, int y){
 }
 
 TextBox::TextBox(int x, int y, char letter, Font font, Color color): letter(letter){
+
     DrawRectangle(x, y, textBoxSize, textBoxSize, color);
     DrawTextEx(font, std::string(1, letter).c_str(), XYtoVector2(x-7+textBoxSize/2, y-15+textBoxSize/2), 35, textSpacing, textColor);
 }
 
-void TypingTrials::drawScore(Font font) {
+void TypingTrials::drawScore(std::vector<Texture2D> textures, Font font) {
     BeginDrawing();
         ClearBackground(WHITE);
 
+        //bg
+        DrawTexture(textures[2], 0, 0, Color{255, 255, 255, 75}); 
+        
         //bg rectangle
         DrawRectangle(
             width/2 - (MeasureText(TextFormat("Incorrect Letters: %d", incorrectLetters), 40)/2 + 40),
@@ -118,10 +122,46 @@ Screen::Screen(int w, int h) {
 }
 
 //MainScreen Functions
+
+bool MainScreen::buttonMode1Clicked(){
+    buttonPressedMode1 = false;
+    if(CheckCollisionPointRec(GetMousePosition(), buttonMode1) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
+        buttonPressedMode1 = true;
+    }
+    return buttonPressedMode1;
+}
+
+bool MainScreen::buttonMode2Clicked(){
+    buttonPressedMode2 = false;
+    if(CheckCollisionPointRec(GetMousePosition(), buttonMode2) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
+        buttonPressedMode2 = true;
+    }
+    return buttonPressedMode1;
+}
 void MainScreen::draw(std::vector<Texture2D> textures, Font font) {
     BeginDrawing();
         ClearBackground(WHITE);
-        DrawTextEx(font, msg.c_str(), XYtoVector2(width/2, height/2), font.baseSize, textSpacing, textColor);
+        DrawTexture(textures[2], 20, 0, Color{255, 255, 255, 75});
+        DrawTextEx(
+            font, msg.c_str(),
+            XYtoVector2(
+                (width/2) - (MeasureText(msg.c_str(), 20)/2),
+                height/2
+            ),
+            font.baseSize,
+            textSpacing,
+            textColor
+        );
+
+        //button-mode1
+        DrawRectangleRec(buttonMode1, buttonPressedMode1 ? textColor : WHITE);
+        DrawText("Typing Trials", buttonMode1.x + 30, buttonMode1.y + 15, 20, buttonPressedMode1 ? WHITE : textColor);
+        DrawRectangleLines((width/2) - 100, (height/2) - 40, 200, 50, BLACK);
+
+        //button-mode2
+        DrawRectangleRec(buttonMode2, buttonPressedMode2 ? WHITE : textColor);
+        DrawText("Ticking Time Bomb", buttonMode2.x + 10, buttonMode2.y + 10, 20, buttonPressedMode2 ? textColor : WHITE);
+        DrawRectangleLines((width/2) - 100, (height/2) - 40, 200, 50, BLACK);
     EndDrawing();
 }
 
@@ -194,7 +234,7 @@ void TypingTrials::draw(std::vector<Texture2D> textures, Font font){
     ClearBackground(Color{245, 240, 255, 255});
 
     //background
-    DrawTexture(textures[2], 0, 0, Color{255, 255, 255, 75});
+    DrawTexture(textures[2], 20, 0, Color{255, 255, 255, 75});
 
     //stage
     DrawTexture(textures[3], 0, 0, WHITE);
@@ -254,14 +294,19 @@ void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen*>& modes)
     //Update all
     //...
     GameScreen* tt = modes[0];
-
     switch (gameState){
         case titleScreen:
         // Update ----------------------------------------------------------------------------------
-            if (IsKeyPressed(KEY_SPACE)){
+            // if (IsKeyPressed(KEY_SPACE)){
+            //     gameState = mode1;
+            //     tt->setCurrentWord(modes[0]->getRandomWord(word_pool));
+            //     tt->setNextWord(modes[0]->getRandomWord(word_pool));
+            // }
+            if(mains[0].buttonMode1Clicked()){
+                std::cout<<"Clicked";
                 gameState = mode1;
-                modes[0]->setCurrentWord(modes[0]->getRandomWord(word_pool));
-                modes[0]->setNextWord(modes[0]->getRandomWord(word_pool));
+                tt->setCurrentWord(modes[0]->getRandomWord(word_pool));
+                tt->setNextWord(modes[0]->getRandomWord(word_pool));
             }
 
             if (IsKeyPressed(KEY_Q)) {
@@ -285,7 +330,7 @@ void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen*>& modes)
 
             //timer: 60 seconds (60fps)
             if (tt->timesUp()){
-                tt->drawScore(font);
+                tt->drawScore(textures, font);
             } else {
                 tt->draw(textures, font);
             }
@@ -317,7 +362,7 @@ void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen*>& modes)
             break;
 
         case skipped:
-            modes[0]->drawScore(font);
+            modes[0]->drawScore(textures, font);
             break;
 
     }  
