@@ -25,7 +25,7 @@ std::vector<std::string> jsonVec(ns::wordpool ns, std::string filename);
 
 class TextBox{
 public:
-    TextBox(int x, int y, char letter, Color color);
+    TextBox(int x, int y, char letter, Font font, Color color);
     char letter;
 };
 
@@ -33,7 +33,7 @@ class Screen{
 public:
     Screen(): width(1280), height(720) {}
     Screen(int w, int h);
-    virtual void draw() = 0;
+    virtual void draw(std::vector<Texture2D> textures, Font font) = 0;
 protected:
     int width, height;
 };
@@ -43,7 +43,7 @@ class MainScreen: public Screen{
 public:
     MainScreen(): Screen() { msg = ""; }
     MainScreen(std::string t): Screen() { msg = t; }
-    void draw();
+    void draw(std::vector<Texture2D> textures, Font font);
 protected:
     std::string msg;
 
@@ -52,12 +52,13 @@ protected:
 class GameScreen: public Screen{
 public:
     GameScreen();
-    GameScreen(int index, int speed, int typed, int f, int w, int h);
-    GameScreen(int index, int speed, int typed, int f);
+    GameScreen(int index, int idleIndex, int speed, int typed, int f, int w, int h);
+    GameScreen(int index, int idleIndex, int speed, int typed, int f);
     std::string getRandomWord(std::vector<std::string> wordPool);
     //random current/next?
     void setCurrentWord(std::string w) { currentWord = w; }
     void setNextWord(std::string w) { nextWord = w; }
+    void setIdleIndex(int i) { idleIndex = i; }
     bool typedLetter(char w);
     void typedWord();
     bool timesUp();
@@ -65,17 +66,19 @@ public:
     std::string getCurrentWord() { return currentWord; }
     std::string getNextWord() { return nextWord; }
     int getTypingIndex() { return typingIndex; }
+    int getIdleIndex() { return idleIndex; }
     int getWordsTyped() { return wordTyped; }
     void addTypingIndex() { ++typingIndex; }
     void addWordTyped() { ++wordTyped; }
     void addLettersTyped() { ++lettersTyped; }
-    void DrawWordOnScreen(std::string random_word, int typing_index);
-    virtual void draw() = 0;
+    void DrawWordOnScreen(std::string random_word, int typing_index, Font font);
+    virtual void draw(std::vector<Texture2D> textures, Font font) = 0;
     virtual void framesCount() = 0;
     virtual void update(char key) = 0;
-    virtual void drawScore() = 0;
+    virtual void drawScore(Font font) = 0;
 protected:
     int typingIndex;
+    int idleIndex = 0;
     int wpm;
     int incorrectLetters;
     int wordTyped;
@@ -84,6 +87,7 @@ protected:
     std::string currentWord;
     std::string nextWord;
     std::vector<std::string> wordPool;
+    
 };
 
 
@@ -91,10 +95,10 @@ protected:
 class TypingTrials: public GameScreen{
 public:
     TypingTrials();
-    void draw();
+    void draw(std::vector<Texture2D> textures, Font font);
     void framesCount() { --frames; }
     void update(char key);
-    void drawScore();
+    void drawScore(Font font);
 };
 
 class Game{
@@ -109,6 +113,9 @@ protected:
     int width, height;
     GameState gameState;
     std::vector<std::string> word_pool; // our 1000 word json
+    std::vector<Texture2D> textures;
+    Font font;
+    Image icon;
 };
 
 //class score

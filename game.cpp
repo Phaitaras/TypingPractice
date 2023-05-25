@@ -19,8 +19,24 @@ std::vector<std::string> jsonVec(ns::wordpool wp, std::string fileName){
 //Game Functions
 Game::Game(int width, int height, std::string title): width(width), height(height), gameState(titleScreen){
     assert(!GetWindowHandle()); //Check if window has not been created
-    InitWindow(width, height, title.c_str());
+    InitWindow(width, height, title.c_str()); 
     SetTargetFPS(60);
+    
+    //textures
+    Texture2D rabbit = LoadTexture("../assets/dubu.png");
+    Texture2D bear = LoadTexture("../assets/nongbear.png");
+    Texture2D background = LoadTexture("../assets/bg.png");
+    Texture2D stage = LoadTexture("../assets/stage.png");
+
+    textures.push_back(rabbit);
+    textures.push_back(bear);
+    textures.push_back(background);
+    textures.push_back(stage);
+
+    //font = LoadFontEx("../assets/rainyhearts.ttf", 30, 0, 0);
+    font = LoadFontEx("../assets/levi-windows.ttf", 25, 0, 0);
+    icon = LoadImage("../assets/icon2.png");
+    SetWindowIcon(icon);
 
     ns::wordpool eng;
     this->word_pool = jsonVec(eng, "../words.json");
@@ -41,13 +57,19 @@ const int textBoxSize = 60;
 const Color textBoxColor = Color{227, 226, 254, 255};
 const Color textBoxColorHighlighted = Color{180, 177, 255, 255};
 const Color textColor = Color{117, 79, 186, 255};
+const int textSpacing = 2;
+Rectangle source;
 
-TextBox::TextBox(int x, int y, char letter, Color color): letter(letter){
-    DrawRectangle(x, y, textBoxSize, textBoxSize, color);
-    DrawText(std::string(1, letter).c_str(), x-7+textBoxSize/2, y-15+textBoxSize/2, textBoxSize/2, textColor);
+Vector2 XYtoVector2(int x, int y){
+    return Vector2{(float)x, (float)y};
 }
 
-void TypingTrials::drawScore() {
+TextBox::TextBox(int x, int y, char letter, Font font, Color color): letter(letter){
+    DrawRectangle(x, y, textBoxSize, textBoxSize, color);
+    DrawTextEx(font, std::string(1, letter).c_str(), XYtoVector2(x-7+textBoxSize/2, y-15+textBoxSize/2), 35, textSpacing, textColor);
+}
+
+void TypingTrials::drawScore(Font font) {
     BeginDrawing();
         ClearBackground(WHITE);
 
@@ -59,31 +81,31 @@ void TypingTrials::drawScore() {
             height/2 + 40, PURPLE
         );
 
-        DrawText(
+        DrawTextEx(font, 
             TextFormat("Score"),
-            (width/2) - (MeasureText(TextFormat("Score"), 60)/2),
-            height/2 - 180, 60, WHITE
+            XYtoVector2((width/2) - (MeasureText(TextFormat("Score"), 60)/2),
+            height/2 - 180), 60, textSpacing, WHITE
         );
 
         //incorrect words
-        DrawText(
+        DrawTextEx(font, 
             TextFormat("Incorrect Letters: %d", incorrectLetters),
-            (width/2) - (MeasureText(TextFormat("Incorrect Letters: %d", incorrectLetters), 40)/2),
-            height/2 - 40, 40, textColor
+            XYtoVector2((width/2) - (MeasureText(TextFormat("Incorrect Letters: %d", incorrectLetters), 40)/2),
+            height/2 - 40), 40, textSpacing, textColor
         );
 
         //wpm
-        DrawText(
+        DrawTextEx(font, 
             TextFormat("WPM: %d", wpm),
-            (width/2) - (MeasureText(TextFormat("WPM: %d", wpm), 40)/2),
-            height/2 - 80, 40, textColor
+            XYtoVector2((width/2) - (MeasureText(TextFormat("WPM: %d", wpm), 40)/2),
+            height/2 - 80), 40, textSpacing, textColor
         );
 
         //count
-        DrawText(
+        DrawTextEx(font, 
             TextFormat("Score: %d", wordTyped),
-            (width/2) - (MeasureText(TextFormat("Score: %d", wordTyped), 40)/2),
-            height/2, 40, textColor
+            XYtoVector2((width/2) - (MeasureText(TextFormat("Score: %d", wordTyped), 40)/2),
+            height/2), 40, textSpacing, textColor
         );
 
     EndDrawing();
@@ -96,15 +118,15 @@ Screen::Screen(int w, int h) {
 }
 
 //MainScreen Functions
-void MainScreen::draw() {
+void MainScreen::draw(std::vector<Texture2D> textures, Font font) {
     BeginDrawing();
         ClearBackground(WHITE);
-        DrawText(msg.c_str(), width/2, height/2, 20, textColor);
+        DrawTextEx(font, msg.c_str(), XYtoVector2(width/2, height/2), font.baseSize, textSpacing, textColor);
     EndDrawing();
 }
 
 //GameScreen Functions
-GameScreen::GameScreen() : Screen(), typingIndex(0), wpm(0), wordTyped(0), frames(0), lettersTyped(0), incorrectLetters(0) {
+GameScreen::GameScreen() : Screen(), typingIndex(0), idleIndex(0), wpm(0), wordTyped(0), frames(0), lettersTyped(0), incorrectLetters(0) {
     SetTargetFPS(60);
     ns::wordpool eng;
     this->wordPool = jsonVec(eng, "../words.json");
@@ -112,8 +134,8 @@ GameScreen::GameScreen() : Screen(), typingIndex(0), wpm(0), wordTyped(0), frame
     setNextWord(getRandomWord(wordPool));
 }
 
-GameScreen::GameScreen(int index, int speed, int typed, int f, int w, int h)
-    : Screen(w, h), typingIndex(index), wpm(speed), wordTyped(typed), lettersTyped(0), incorrectLetters(0), frames(f) {
+GameScreen::GameScreen(int index, int idleIndex, int speed, int typed, int f, int w, int h)
+    : Screen(w, h), typingIndex(index), idleIndex(idleIndex), wpm(speed), wordTyped(typed), lettersTyped(0), incorrectLetters(0), frames(f) {
     SetTargetFPS(60);
     ns::wordpool eng;
     this->wordPool = jsonVec(eng, "../words.json");
@@ -121,24 +143,23 @@ GameScreen::GameScreen(int index, int speed, int typed, int f, int w, int h)
     setNextWord(getRandomWord(wordPool));
 }
 
-GameScreen::GameScreen(int index, int speed, int typed, int f)
-    : Screen(), typingIndex(index), wpm(speed), wordTyped(typed), lettersTyped(0), incorrectLetters(0), frames(f) {
+GameScreen::GameScreen(int index, int idleIndex, int speed, int typed, int f)
+    : Screen(), typingIndex(index), idleIndex(idleIndex), wpm(speed), wordTyped(typed), lettersTyped(0), incorrectLetters(0), frames(f) {
         
 };
 
-void GameScreen::DrawWordOnScreen(std::string current_word, int typing_index){
+void GameScreen::DrawWordOnScreen(std::string current_word, int typing_index, Font font){
     std::vector<TextBox> text;
 
     for (int i = 0; i < current_word.size(); i++){
         int x_pos = (GetScreenWidth()/2) + (textBoxSize * 3/2 * (i)) - (textBoxSize * 3/4 * current_word.length() - textBoxSize/4);
 
         if (i == typing_index){ //highlighted letter textbox
-            text.push_back(TextBox{x_pos, 280, current_word[i], textBoxColorHighlighted});
-            //border decoration it doesnt work wtf
-            //DrawRectangleLines(x_pos, 280, textBox_size + 2, textBox_size + 2, Color{84, 218, 119});
+            text.push_back(TextBox{x_pos, 280, current_word[i], font, textBoxColorHighlighted});
+            DrawRectangleLinesEx(Rectangle{(float) x_pos - 4, 276.0f, textBoxSize + 8.0f,  textBoxSize + 8.0f}, 2, Color{143, 139, 231, 255});
         
         } else { //normal letter textbox
-            text.push_back(TextBox{x_pos, 300, current_word[i], textBoxColor});
+            text.push_back(TextBox{x_pos, 300, current_word[i], font, textBoxColor});
         }
     }
 }
@@ -168,34 +189,43 @@ TypingTrials::TypingTrials() : GameScreen() {
     setNextWord(getRandomWord(wordPool));
 } 
 
-void TypingTrials::draw(){
+void TypingTrials::draw(std::vector<Texture2D> textures, Font font){
     BeginDrawing();
-    ClearBackground(Color{210, 248, 249});
+    ClearBackground(Color{245, 240, 255, 255});
 
     //background
-    DrawRectangle(0, height/2 - 10, 1280, 20, Color{179, 149, 230, 255});
-    DrawRectangle(0, height/2 + 10, 1280, 500, Color{244, 220, 242, 255});
+    DrawTexture(textures[2], 0, 0, Color{255, 255, 255, 75});
+
+    //stage
+    DrawTexture(textures[3], 0, 0, WHITE);
 
     //timer bar
-    DrawRectangleLines(width/2 - 180, 420, 368, 28, textColor);
-    DrawRectangle(width/2 - 176, 424, frames / 10, 20, textColor);
+    DrawRectangleLines(width/2 - 180, 420, 368, 28, WHITE);
+    DrawRectangle(width/2 - 176, 424, frames / 10, 20, WHITE);
 
     //next word
-    DrawText(
+    DrawTextEx(font, 
         TextFormat("Next Word: %s", nextWord.c_str()),
-        width/2 - MeasureText(TextFormat("Next Word: %s", nextWord.c_str()), 20)/2,
-        height/2 + 30, 20, textColor
+        XYtoVector2(width/2 - MeasureText(TextFormat("Next Word: %s", nextWord.c_str()), 20)/2, height/2 + 25),
+        25, textSpacing, WHITE
     );
     //wpm
-    DrawText(TextFormat("WPM: %d", wpm), width/2 - 180, height/2 + 100, 20, textColor);
+    DrawTextEx(font, TextFormat("WPM: %d", wpm), XYtoVector2(width/2 - 180, height/2 + 100), 25, textSpacing, WHITE);
     //count
-    DrawText(
+    DrawTextEx(font, 
         TextFormat("Score: %d", wordTyped),
-        width/2 + 188 - MeasureText(TextFormat("Score: %d", wordTyped), 20),
-        height/2 + 100, 20, textColor
+        XYtoVector2(width/2 + 188 - MeasureText(TextFormat("Score: %d", wordTyped), 20),
+        height/2 + 100),
+        25, textSpacing, WHITE
     );
 
-    DrawWordOnScreen(currentWord, typingIndex);
+    source = Rectangle{idleIndex * textBoxSize * 1.0f, 0.0f, 60.0f, 60.0f};
+
+    DrawWordOnScreen(currentWord, typingIndex, font);
+
+    DrawTextureRec(textures[1], source, Vector2{
+        ((GetScreenWidth()/2) + (textBoxSize * 3/2 * (typingIndex)) - (textBoxSize * 3/4 * currentWord.length() - textBoxSize/4) * 1.0f)
+        , 220}, WHITE);
     EndDrawing();
 }
 
@@ -240,7 +270,7 @@ void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen*>& modes)
 
 
         // Drawing ---------------------------------------------------------------------------------
-            mains[0].draw();
+            mains[0].draw(textures, font);
             break;
 
 
@@ -255,15 +285,21 @@ void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen*>& modes)
 
             //timer: 60 seconds (60fps)
             if (tt->timesUp()){
-                tt->drawScore();
+                tt->drawScore(font);
             } else {
-                tt ->draw();
+                tt->draw(textures, font);
+            }
+
+            if (tt->getFrames() % 30 == 0 && tt->getIdleIndex() < 1){
+                tt->setIdleIndex(1);
+            } else if (tt->getFrames() % 30 == 0 && tt->getIdleIndex() > 0){
+                tt->setIdleIndex(0);
             }
 
             //force quit
-            if (IsKeyPressed(KEY_LEFT_SHIFT)) gameState = endScreen;
+            if (IsKeyPressed(KEY_LEFT_CONTROL)) gameState = endScreen;
 
-            if (IsKeyPressed(KEY_E)) gameState = skipped;
+            if (IsKeyPressed(KEY_LEFT_SHIFT)) gameState = skipped;
 
         // Drawing ---------------------------------------------------------------------------------
             // tt->draw();
@@ -277,11 +313,11 @@ void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen*>& modes)
             }
 
         // Drawing ---------------------------------------------------------------------------------
-            mains[1].draw();
+            mains[1].draw(textures, font);
             break;
 
         case skipped:
-            modes[0]->drawScore();
+            modes[0]->drawScore(font);
             break;
 
     }  
