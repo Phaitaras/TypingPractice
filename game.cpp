@@ -145,10 +145,10 @@ void MainScreen::draw(std::vector<Texture2D> textures, Font font) {
         DrawTextEx(
             font, msg.c_str(),
             XYtoVector2(
-                (width/2) - (MeasureText(msg.c_str(), 20)/2),
-                height/2
+                (width/2) - (MeasureText(msg.c_str(), 60)/3),
+                height/2 - 120
             ),
-            font.baseSize,
+            60,
             textSpacing,
             textColor
         );

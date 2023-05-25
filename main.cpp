@@ -5,7 +5,7 @@ using namespace std;
 int main(){
         const int screenWidth = 1280;
         const int screenHeight = 720;
-        MainScreen startingScreen = MainScreen();
+        MainScreen startingScreen = MainScreen("FUZZY TYPERS");
         TypingTrials typingTrials = TypingTrials();
         MainScreen endingScreen = MainScreen("RETRY ?");
 
