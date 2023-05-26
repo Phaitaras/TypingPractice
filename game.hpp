@@ -34,8 +34,10 @@ public:
     Screen(): width(1280), height(720) {}
     Screen(int w, int h);
     virtual void draw(std::vector<Texture2D> textures, Font font) = 0;
+    virtual bool buttonClicked(Rectangle button);
 protected:
     int width, height;
+    bool buttonPressed;
 };
 
 //screen for displaying messages or info
@@ -43,9 +45,11 @@ class MainScreen: public Screen{
 public:
     MainScreen(): Screen() { msg = ""; }
     MainScreen(std::string t): Screen() { msg = t; }
-    bool buttonMode1Clicked();
-    bool buttonMode2Clicked();
+    // bool buttonMode1Clicked();
+    // bool buttonMode2Clicked();
     void draw(std::vector<Texture2D> textures, Font font);
+    Rectangle getButton1() { return buttonMode1; }
+    Rectangle getButton2() { return buttonMode2; }
 
 
 protected:
@@ -53,8 +57,8 @@ protected:
 private:
     Rectangle buttonMode1 = {(width/2) - 100, (height/2) - 40, 200, 50};
     Rectangle buttonMode2 = {(width/2) - 100, (height/2) + 40, 200, 50};
-    bool buttonPressedMode1 = false;
-    bool buttonPressedMode2 = false;
+    // bool buttonPressedMode1 = false;
+    // bool buttonPressedMode2 = false;
 
 
 };
@@ -80,6 +84,7 @@ public:
     int getTypingIndex() { return typingIndex; }
     int getIdleIndex() { return idleIndex; }
     int getWordsTyped() { return wordTyped; }
+    Rectangle getButtonNext() { return buttonNext; }
 
     //add-reduct
     void addTypingIndex() { ++typingIndex; }
@@ -91,7 +96,7 @@ public:
     void DrawWordOnScreen(std::string random_word, int typing_index, Font font);
     virtual void draw(std::vector<Texture2D> textures, Font font) = 0;
     virtual void update(char key) = 0;
-    virtual void drawScore(std::vector<Texture2D> textures, Font font) = 0;
+    virtual void drawScore(std::vector<Texture2D> textures, Font font);
 protected:
     int typingIndex;
     int idleIndex = 0;
@@ -103,10 +108,9 @@ protected:
     std::string currentWord;
     std::string nextWord;
     std::vector<std::string> wordPool;
+    Rectangle buttonNext = {(width/2) - 100, (height/2) + 100, 200, 50};
     
 };
-
-
 
 class TypingTrials: public GameScreen{
 public:
@@ -114,7 +118,6 @@ public:
     void typedWord();
     void draw(std::vector<Texture2D> textures, Font font);
     void update(char key);
-    void drawScore(std::vector<Texture2D> textures, Font font);
     void reset();
 private:
     const int FRAME = 3600; //60sec
@@ -126,7 +129,6 @@ public:
     void typedWord();
     void draw(std::vector<Texture2D> textures, Font font);
     void update(char key);
-    void drawScore(std::vector<Texture2D> textures, Font font);
     void reset();
 private:
     const int FRAME = 480; //8sec

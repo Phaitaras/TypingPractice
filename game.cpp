@@ -78,23 +78,29 @@ Screen::Screen(int w, int h) {
     height = h;
 }
 
+bool Screen::buttonClicked(Rectangle button) {
+    buttonPressed = false;
+    if(CheckCollisionPointRec(GetMousePosition(), button) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
+        buttonPressed= true;
+    }
+    return buttonPressed;
+}
 //MainScreen Functions
+// bool MainScreen::buttonMode1Clicked(){
+//     buttonPressedMode1 = false;
+//     if(CheckCollisionPointRec(GetMousePosition(), buttonMode1) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
+//         buttonPressedMode1 = true;
+//     }
+//     return buttonPressedMode1;
+// }
 
-bool MainScreen::buttonMode1Clicked(){
-    buttonPressedMode1 = false;
-    if(CheckCollisionPointRec(GetMousePosition(), buttonMode1) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
-        buttonPressedMode1 = true;
-    }
-    return buttonPressedMode1;
-}
-
-bool MainScreen::buttonMode2Clicked(){
-    buttonPressedMode2 = false;
-    if(CheckCollisionPointRec(GetMousePosition(), buttonMode2) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
-        buttonPressedMode2 = true;
-    }
-    return buttonPressedMode2;
-}
+// bool MainScreen::buttonMode2Clicked(){
+//     buttonPressedMode2 = false;
+//     if(CheckCollisionPointRec(GetMousePosition(), buttonMode2) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
+//         buttonPressedMode2 = true;
+//     }
+//     return buttonPressedMode2;
+// }
 void MainScreen::draw(std::vector<Texture2D> textures, Font font) {
     BeginDrawing();
         ClearBackground(WHITE);
@@ -111,14 +117,15 @@ void MainScreen::draw(std::vector<Texture2D> textures, Font font) {
         );
 
         //button-mode1
-        DrawRectangleRec(buttonMode1, buttonPressedMode1 ? textColor : WHITE);
-        DrawText("Typing Trials", buttonMode1.x + 30, buttonMode1.y + 15, 20, buttonPressedMode1 ? WHITE : textColor);
+        DrawRectangleRec(buttonMode1, buttonClicked(buttonMode1) ? textColor : WHITE);
+        DrawText("Typing Trials", buttonMode1.x + 30, buttonMode1.y + 15, 20, buttonClicked(buttonMode1) ? WHITE : textColor);
         DrawRectangleLines((width/2) - 100, (height/2) - 40, 200, 50, BLACK);
 
         //button-mode2
-        DrawRectangleRec(buttonMode2, buttonPressedMode2 ? WHITE : textColor);
-        DrawText("Ticking Time Bomb", buttonMode2.x + 10, buttonMode2.y + 10, 20, buttonPressedMode2 ? textColor : WHITE);
+        DrawRectangleRec(buttonMode2, buttonClicked(buttonMode2) ? WHITE : textColor);
+        DrawText("Ticking Time Bomb", buttonMode2.x + 10, buttonMode2.y + 10, 20, buttonClicked(buttonMode2) ? textColor : WHITE);
         DrawRectangleLines((width/2) - 100, (height/2) - 40, 200, 50, BLACK);
+
     EndDrawing();
 }
 
@@ -243,7 +250,7 @@ void TypingTrials::update(char key) {
     } 
 }
 
-void TypingTrials::drawScore(std::vector<Texture2D> textures, Font font) {
+void GameScreen::drawScore(std::vector<Texture2D> textures, Font font) {
     BeginDrawing();
         ClearBackground(WHITE);
 
@@ -252,38 +259,42 @@ void TypingTrials::drawScore(std::vector<Texture2D> textures, Font font) {
         
         //bg rectangle
         DrawRectangle(
-            (width/2) - ((MeasureText(TextFormat("Incorrect Letters: %d", incorrectLetters), 40) + 80)/2),
+            (width/2) - ((MeasureText(TextFormat("m i s t a k e s: %d", incorrectLetters), 40) + 80)/2),
             height/2 - 200,
-            (MeasureText(TextFormat("Incorrect Letters: %d", incorrectLetters), 40)) + 80,
+            (MeasureText(TextFormat("m i s t a k e s: %d", incorrectLetters), 40)) + 80,
             height/2 + 40, textBoxColor
         );
 
         DrawTextEx(font, 
-            TextFormat("SCORE"),
-            XYtoVector2((width/2) - ((MeasureText(TextFormat("SCORE"), 60) - 80)/2),
+            TextFormat("S C O R E"),
+            XYtoVector2((width/2) - ((MeasureText(TextFormat("S C O R E"), 60) - 120)/2),
             height/2 - 140), 60, textSpacing, WHITE
         );
 
         //wpm
         DrawTextEx(font, 
-            TextFormat("WPM: %d", wpm),
-            XYtoVector2((width/2) - (((MeasureText(TextFormat("WPM: %d", wpm), 40) - 80)/2)),
-            height/2 - 80), 40, textSpacing, textColor
+            TextFormat("w p m: %d", wpm),
+            XYtoVector2((width/2) - (((MeasureText(TextFormat("w p m: %d", wpm), 40) - 40)/2)),
+            height/2 - 60), 40, textSpacing, textColor
         );
 
         //incorrect words
         DrawTextEx(font, 
-            TextFormat("Incorrect Letters: %d", incorrectLetters),
-            XYtoVector2((width/2) - (((MeasureText(TextFormat("Incorrect Letters: %d", incorrectLetters), 40) - 80)/2)),
-            height/2 - 40), 40, textSpacing, textColor
+            TextFormat("m i s t a k e s: %d", incorrectLetters),
+            XYtoVector2((width/2) - (((MeasureText(TextFormat("m i s t a k e s: %d", incorrectLetters), 40) - 80)/2)),
+            height/2 - 20), 40, textSpacing, textColor
         );
 
         //count
         DrawTextEx(font, 
-            TextFormat("Score: %d", wordTyped),
-            XYtoVector2((width/2) - (((MeasureText(TextFormat("Score: %d", wordTyped), 40)) - 80)/2),
-            height/2), 40, textSpacing, textColor
+            TextFormat("s c o r e: %d", wordTyped),
+            XYtoVector2((width/2) - (((MeasureText(TextFormat("s c o r e: %d", wordTyped), 40)) - 80)/2),
+            height/2 + 20), 40, textSpacing, textColor
         );
+
+        DrawRectangleRec(buttonNext, buttonClicked(buttonNext) ? textColor : WHITE);
+        DrawText("Next", buttonNext.x + 60, buttonNext.y + 15, 20, buttonClicked(buttonNext) ? WHITE : textColor);
+        DrawRectangleLinesEx(buttonNext, 2, Color{0, 0, 0, 255});
 
     EndDrawing();
 }
@@ -380,51 +391,6 @@ void TickingTimeBomb::draw(std::vector<Texture2D> textures, Font font){
     EndDrawing();
 }
 
-void TickingTimeBomb::drawScore(std::vector<Texture2D> textures, Font font) {
-    BeginDrawing();
-        ClearBackground(WHITE);
-
-        //bg
-        DrawTexture(textures[2], 20, 0, Color{255, 255, 255, 75}); 
-        
-        //bg rectangle
-        DrawRectangle(
-            width/2 - (MeasureText(TextFormat("Incorrect Letters: %d", incorrectLetters), 40)/2),
-            height/2 - 200,
-            (MeasureText(TextFormat("Incorrect Letters: %d", incorrectLetters), 40)) + 80,
-            height/2 + 40, textBoxColor
-        );
-
-        DrawTextEx(font, 
-            TextFormat("SCORE"),
-            XYtoVector2((MeasureText(TextFormat("Incorrect Letters: %d", incorrectLetters), 40)/2),
-            height/2 - 180), 60, textSpacing, WHITE
-        );
-
-        //incorrect words
-        DrawTextEx(font, 
-            TextFormat("Incorrect Letters: %d", incorrectLetters),
-            XYtoVector2((MeasureText(TextFormat("Incorrect Letters: %d", incorrectLetters), 40)/2),
-            height/2 - 120), 40, textSpacing, textColor
-        );
-
-        //wpm
-        DrawTextEx(font, 
-            TextFormat("WPM: %d", wpm),
-            XYtoVector2((MeasureText(TextFormat("Incorrect Letters: %d", incorrectLetters), 40)/2),
-            height/2 - 60), 40, textSpacing, textColor
-        );
-
-        //count
-        DrawTextEx(font, 
-            TextFormat("Score: %d", wordTyped),
-            XYtoVector2((MeasureText(TextFormat("Incorrect Letters: %d", incorrectLetters), 40)/2),
-            height/2), 40, textSpacing, textColor
-        );
-
-    EndDrawing();
-}
-
 char key;
 
 void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen*>& modes) {
@@ -432,34 +398,28 @@ void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen*>& modes)
     //...
     GameScreen* tt = modes[0];
     GameScreen* ttb = modes[1];
+    MainScreen mainMenu = mains[0];
+    MainScreen end = mains[1];
 
-    switch (gameState){
+    switch (gameState) {
         case titleScreen:
         // Update ----------------------------------------------------------------------------------
-            if(mains[0].buttonMode1Clicked()){
-                std::cout<<"Clicked";
+            if(mainMenu.buttonClicked(mainMenu.getButton1())){
                 gameState = mode1;
                 tt->reset();
-                // tt->setCurrentWord(modes[0]->getRandomWord(word_pool));
-                // tt->setNextWord(modes[0]->getRandomWord(word_pool));
             }
-            if(mains[1].buttonMode2Clicked()){
+            if(mainMenu.buttonClicked(mainMenu.getButton2())){
                 gameState = mode2;
                 ttb->reset();
-                // ttb->setCurrentWord(modes[0]->getRandomWord(word_pool));
-                // ttb->setNextWord(modes[0]->getRandomWord(word_pool));
             }
 
-            if (IsKeyPressed(KEY_Q)) {
+            if (IsKeyPressed(KEY_LEFT_CONTROL)) {
                 gameState = endScreen;
             }
 
-
         // Drawing ---------------------------------------------------------------------------------
-            mains[0].draw(textures, font);
+            mainMenu.draw(textures, font);
             break;
-
-
         case mode1:
         // Update ----------------------------------------------------------------------------------
             key = GetCharPressed();
@@ -469,8 +429,11 @@ void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen*>& modes)
             // frames -= 1
             tt->framesCount();
 
-            //timer: 60 seconds (60fps)
+        //timer: 60 seconds (60fps)
             if (tt->timesUp()){
+                if (tt->buttonClicked(tt->getButtonNext())){
+                    gameState = endScreen;
+                }
                 tt->drawScore(textures, font);
             } else {
                 tt->draw(textures, font);
@@ -485,10 +448,6 @@ void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen*>& modes)
             //force quit
             if (IsKeyPressed(KEY_LEFT_CONTROL)) gameState = endScreen;
 
-            if (IsKeyPressed(KEY_LEFT_SHIFT)) gameState = skipped;
-
-        // Drawing ---------------------------------------------------------------------------------
-            // tt->draw(textures,font);
             break;
 
         case mode2:
@@ -502,6 +461,7 @@ void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen*>& modes)
 
             //timer: 60 seconds (60fps)
             if (ttb->timesUp()){
+                if (ttb->buttonClicked(ttb->getButtonNext())) gameState = endScreen;
                 ttb->drawScore(textures, font);
             } else {
                 ttb->draw(textures, font);
@@ -516,13 +476,22 @@ void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen*>& modes)
             //force quit
             if (IsKeyPressed(KEY_LEFT_CONTROL)) gameState = endScreen;
 
-            if (IsKeyPressed(KEY_LEFT_SHIFT)) gameState = skipped;
-
         // Drawing ---------------------------------------------------------------------------------
-            // tt->draw(textures,font);
             break;
         
         case endScreen:
+            if (end.buttonClicked(end.getButton1())){
+                gameState = mode1;
+                tt->reset();
+                // tt->setCurrentWord(modes[0]->getRandomWord(word_pool));
+                // tt->setNextWord(modes[0]->getRandomWord(word_pool));
+            }
+            if(end.buttonClicked(end.getButton2())){
+                gameState = mode2;
+                ttb->reset();
+                // ttb->setCurrentWord(modes[0]->getRandomWord(word_pool));
+                // ttb->setNextWord(modes[0]->getRandomWord(word_pool));
+            }
 
         // Update ----------------------------------------------------------------------------------
             if (IsKeyPressed(KEY_A)) {
@@ -532,13 +501,6 @@ void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen*>& modes)
         // Drawing ---------------------------------------------------------------------------------
             mains[1].draw(textures, font);
             break;
-
-        case skipped:
-            modes[0]->drawScore(textures, font);
-            break;
-
     }  
-
-
 }
 
