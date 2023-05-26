@@ -70,20 +70,26 @@ public:
     void setNextWord(std::string w) { nextWord = w; }
     void setIdleIndex(int i) { idleIndex = i; }
     bool typedLetter(char w);
-    void typedWord();
+    virtual void typedWord() = 0;
     bool timesUp();
+
+    //get
     int getFrames() { return frames; }
     std::string getCurrentWord() { return currentWord; }
     std::string getNextWord() { return nextWord; }
     int getTypingIndex() { return typingIndex; }
     int getIdleIndex() { return idleIndex; }
     int getWordsTyped() { return wordTyped; }
+
+    //add-reduct
     void addTypingIndex() { ++typingIndex; }
     void addWordTyped() { ++wordTyped; }
     void addLettersTyped() { ++lettersTyped; }
+    void framesCount() { --frames; }
+    virtual void reset() = 0;
+
     void DrawWordOnScreen(std::string random_word, int typing_index, Font font);
     virtual void draw(std::vector<Texture2D> textures, Font font) = 0;
-    virtual void framesCount() = 0;
     virtual void update(char key) = 0;
     virtual void drawScore(std::vector<Texture2D> textures, Font font) = 0;
 protected:
@@ -105,10 +111,25 @@ protected:
 class TypingTrials: public GameScreen{
 public:
     TypingTrials();
+    void typedWord();
     void draw(std::vector<Texture2D> textures, Font font);
-    void framesCount() { --frames; }
     void update(char key);
     void drawScore(std::vector<Texture2D> textures, Font font);
+    void reset();
+private:
+    const int FRAME = 3600; //60sec
+};
+
+class TickingTimeBomb: public GameScreen{
+public:
+    TickingTimeBomb();
+    void typedWord();
+    void draw(std::vector<Texture2D> textures, Font font);
+    void update(char key);
+    void drawScore(std::vector<Texture2D> textures, Font font);
+    void reset();
+private:
+    const int FRAME = 480; //8sec
 };
 
 class Game{

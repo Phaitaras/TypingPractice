@@ -7,6 +7,7 @@ int main(){
         const int screenHeight = 720;
         MainScreen startingScreen = MainScreen("FUZZY TYPERS");
         TypingTrials typingTrials = TypingTrials();
+        TickingTimeBomb tickingTimeBomb = TickingTimeBomb();
         MainScreen endingScreen = MainScreen("RETRY ?");
 
         Game game{screenWidth, screenHeight, "Typing Game"};
@@ -14,6 +15,7 @@ int main(){
         std::vector<GameScreen*> modes;
         //Font font = LoadFontEx("../assets/dpcomic.ttf", 30, 0, 0);
         modes.push_back(&typingTrials);
+        modes.push_back(&tickingTimeBomb);
 
         while (!game.GameShouldClose()){
             game.Tick(mains, modes);
