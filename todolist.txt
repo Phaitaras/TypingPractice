@@ -53,7 +53,7 @@ To-do??
 
 DONE: 
     1) JSON FILE READER
-    2) GAME PLAY 
+    2) GAMEPLAY 
     3) INHERITANCE GAMEMODES(Typing Trials, Ticking Time Bomb)
     4) THEMES
     5) MASCOTS
@@ -70,3 +70,4 @@ TO DO:
     5) PAUSE SCREEN
     6) FIX WPM FOR SECOND MODE
     7) MEMORY MANAGEMENT????
+    8) CLASS DIAGRAM by MUSIC OHYEA
