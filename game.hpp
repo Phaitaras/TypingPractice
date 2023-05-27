@@ -56,10 +56,10 @@ public:
     Rectangle getButton1() { return buttonMode1; }
     Rectangle getButton2() { return buttonMode2; }
     Rectangle getNameBox() {return nameBox;}
+    char* getName() { return name; }
 
     bool mouseOnText(Rectangle textbox);
     void typingName();
-
 protected:
     std::string msg;
 private:
