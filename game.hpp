@@ -100,9 +100,6 @@ public:
     Rectangle getButtonNext() { return buttonNext; }
 
     //add-reduct
-    void addTypingIndex() { ++typingIndex; }
-    void addWordTyped() { ++wordTyped; }
-    void addLettersTyped() { ++lettersTyped; }
     void framesCount() { --frames; }
     virtual void reset() = 0;
 

@@ -325,8 +325,8 @@ void TypingTrials::draw(std::vector<Texture2D> textures, Font font){
 void TypingTrials::update(char key) {
     framesCount();
     if (typedLetter(key)) {
-        addLettersTyped();
-        addTypingIndex();
+        ++typingIndex;
+        ++lettersTyped;
     }
     else if (key > 0 && !timesUp()) {
         ++incorrectLetters;
@@ -376,8 +376,8 @@ void TickingTimeBomb::typedWord(){
 void TickingTimeBomb::update(char key){
     framesCount();
     if (typedLetter(key)) {
-        addLettersTyped();
-        addTypingIndex();
+        ++lettersTyped;
+        ++typingIndex;
     }
     else if (key > 0 && !timesUp()) {
         ++incorrectLetters;
