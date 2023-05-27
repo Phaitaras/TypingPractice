@@ -1,6 +1,7 @@
 #include "game.hpp"
 
-//json vec
+
+//read json file into vec
 std::vector<std::string> jsonVec(ns::wordpool wp, std::string fileName){
     std::ifstream i(fileName);
     json jsonFile;
@@ -18,6 +19,7 @@ std::vector<std::string> jsonVec(ns::wordpool wp, std::string fileName){
 
 //Game Functions
 Game::Game(int width, int height, std::string title): width(width), height(height), gameState(titleScreen){
+    //init window
     assert(!GetWindowHandle()); //Check if window has not been created
     InitWindow(width, height, title.c_str()); 
     SetTargetFPS(60);
@@ -27,17 +29,15 @@ Game::Game(int width, int height, std::string title): width(width), height(heigh
     Texture2D bear = LoadTexture("../assets/nongbear.png");
     Texture2D background = LoadTexture("../assets/bg.png");
     Texture2D stage = LoadTexture("../assets/stage.png");
+    textures = {rabbit, bear, background, stage};
 
-    textures.push_back(rabbit);
-    textures.push_back(bear);
-    textures.push_back(background);
-    textures.push_back(stage);
-
+    //fonts
     //font = LoadFontEx("../assets/rainyhearts.ttf", 30, 0, 0);
     font = LoadFontEx("../assets/levi-windows.ttf", 25, 0, 0);
     icon = LoadImage("../assets/icon2.png");
     SetWindowIcon(icon);
 
+    //init dictionary/wordpool
     ns::wordpool eng;
     this->word_pool = jsonVec(eng, "../words.json");
 
@@ -53,29 +53,28 @@ bool Game::GameShouldClose() const {
 }
 
 //themes
-const int textBoxSize = 60;
-const Color textBoxColor = Color{227, 226, 254, 255};
-const Color textBoxColorHighlighted = Color{180, 177, 255, 255};
-const Color textColor = Color{117, 79, 186, 255};
-const int textSpacing = 2;
+const int TEXTBOXSIZE = 60;
+const Color TEXTBOXCOLOR = Color{227, 226, 254, 255};
+const Color TEXTBOXCOLORHIGHLIGHTED = Color{180, 177, 255, 255};
+const Color TEXTCOLOR = Color{117, 79, 186, 255};
+const int TEXTSPACING = 2;
 Rectangle source;
 
 Vector2 XYtoVector2(int x, int y){
     return Vector2{(float)x, (float)y};
 }
 
+//rectangle with letter
 TextBox::TextBox(int x, int y, char letter, Font font, Color color): letter(letter){
-
-    DrawRectangle(x, y, textBoxSize, textBoxSize, color);
-    DrawTextEx(font, std::string(1, letter).c_str(), XYtoVector2(x-7+textBoxSize/2, y-15+textBoxSize/2), 35, textSpacing, textColor);
+    DrawRectangle(x, y, TEXTBOXSIZE, TEXTBOXSIZE, color);
+    DrawTextEx(font, std::string(1, letter).c_str(), XYtoVector2(x-7+TEXTBOXSIZE/2, y-15+TEXTBOXSIZE/2), 35, TEXTSPACING, TEXTCOLOR);
 }
-
-
 
 //Screen Functions
 Screen::Screen(int w, int h) {
     width = w;
     height = h;
+    SetTargetFPS(10);
 }
 
 bool Screen::buttonClicked(Rectangle button) {
@@ -85,22 +84,41 @@ bool Screen::buttonClicked(Rectangle button) {
     }
     return buttonPressed;
 }
-//MainScreen Functions
-// bool MainScreen::buttonMode1Clicked(){
-//     buttonPressedMode1 = false;
-//     if(CheckCollisionPointRec(GetMousePosition(), buttonMode1) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
-//         buttonPressedMode1 = true;
-//     }
-//     return buttonPressedMode1;
-// }
 
-// bool MainScreen::buttonMode2Clicked(){
-//     buttonPressedMode2 = false;
-//     if(CheckCollisionPointRec(GetMousePosition(), buttonMode2) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
-//         buttonPressedMode2 = true;
-//     }
-//     return buttonPressedMode2;
-// }
+bool MainScreen::mouseOnText(Rectangle textbox){
+    if (CheckCollisionPointRec(GetMousePosition(), textbox)) mouseonText = true;
+    else mouseonText = false;
+    return mouseonText;
+}
+
+void MainScreen::typingName(){
+    if(mouseOnText(nameBox)){
+        // Set the window's cursor to the I-Beam
+        SetMouseCursor(MOUSE_CURSOR_IBEAM);
+        int key = GetCharPressed();
+
+        while (key > 0){
+            if ((key >= 32) && (key <= 125) && (letterCount < MAX_INPUT_CHARS))
+            {
+                name[letterCount] = (char)key;
+                name[letterCount+1] = '\0'; // Add null terminator at the end of the string.
+                letterCount++;
+            }
+
+            key = GetCharPressed();  // Check next character in the queue
+        }
+
+        if (IsKeyPressed(KEY_BACKSPACE)){
+            letterCount--;
+            if (letterCount < 0) letterCount = 0;
+            name[letterCount] = '\0';
+        } 
+    }else SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+    
+    if (mouseOnText(nameBox)) framesCounter++;
+    else framesCounter = 0;
+}
+
 void MainScreen::draw(std::vector<Texture2D> textures, Font font) {
     BeginDrawing();
         ClearBackground(WHITE);
@@ -112,19 +130,42 @@ void MainScreen::draw(std::vector<Texture2D> textures, Font font) {
                 height/2 - 120
             ),
             60,
-            textSpacing,
-            textColor
+            TEXTSPACING,
+            TEXTCOLOR
         );
-
+        
         //button-mode1
-        DrawRectangleRec(buttonMode1, buttonClicked(buttonMode1) ? textColor : WHITE);
-        DrawText("Typing Trials", buttonMode1.x + 30, buttonMode1.y + 15, 20, buttonClicked(buttonMode1) ? WHITE : textColor);
-        DrawRectangleLines((width/2) - 100, (height/2) - 40, 200, 50, BLACK);
+        DrawRectangleRec(buttonMode1, buttonClicked(buttonMode1) ? TEXTCOLOR : WHITE);
+        DrawText("Typing Trials", buttonMode1.x + 30, buttonMode1.y + 15, 20, buttonClicked(buttonMode1) ? WHITE : TEXTCOLOR);
+        DrawRectangleLinesEx(buttonMode1, 2, BLACK);
 
         //button-mode2
-        DrawRectangleRec(buttonMode2, buttonClicked(buttonMode2) ? WHITE : textColor);
-        DrawText("Ticking Time Bomb", buttonMode2.x + 10, buttonMode2.y + 10, 20, buttonClicked(buttonMode2) ? textColor : WHITE);
-        DrawRectangleLines((width/2) - 100, (height/2) - 40, 200, 50, BLACK);
+        DrawRectangleRec(buttonMode2, buttonClicked(buttonMode2) ? WHITE : TEXTCOLOR);
+        DrawText("Ticking Time Bomb", buttonMode2.x + 10, buttonMode2.y + 10, 20, buttonClicked(buttonMode2) ? TEXTCOLOR : WHITE);
+
+        //prectice-mode
+        DrawRectangleRec(practiceMode, buttonClicked(practiceMode) ? TEXTCOLOR : WHITE);
+        DrawText("Practice Mode", practiceMode.x + 30, practiceMode.y + 15, 20, buttonClicked(practiceMode) ? WHITE : TEXTCOLOR);
+        DrawRectangleLinesEx(practiceMode, 2, BLACK);
+
+        //namebox
+        DrawRectangleRec(nameBox, TEXTBOXCOLOR);
+        if (mouseOnText(nameBox)) DrawRectangleLines((int)nameBox.x, (int)nameBox.y, (int)nameBox.width, (int)nameBox.height, TEXTCOLOR);
+            else DrawRectangleLines((int)nameBox.x, (int)nameBox.y, (int)nameBox.width, (int)nameBox.height, TEXTBOXCOLORHIGHLIGHTED);
+
+            DrawText(name, (int)nameBox.x + 5, (int)nameBox.y + 8, 40, TEXTCOLOR);
+
+            DrawText(TextFormat("ENTER NAME: %i/%i", letterCount, MAX_INPUT_CHARS),(width/2) - 100, (height/2) + 200, 20, TEXTBOXCOLORHIGHLIGHTED);
+
+            if (mouseOnText(nameBox))
+            {
+                if (letterCount < MAX_INPUT_CHARS)
+                {
+                    // Draw blinking underscore char
+                    if (((framesCounter/20)%2) == 0) DrawText("_", (int)nameBox.x + 8 + MeasureText(name, 40), (int)nameBox.y + 12, 40, TEXTCOLOR);
+                }
+                else DrawText("Press BACKSPACE to delete chars...", 230, 300, 20, TEXTBOXCOLOR);
+            }
 
     EndDrawing();
 }
@@ -156,14 +197,14 @@ void GameScreen::DrawWordOnScreen(std::string current_word, int typing_index, Fo
     std::vector<TextBox> text;
 
     for (int i = 0; i < current_word.size(); i++){
-        int x_pos = (GetScreenWidth()/2) + (textBoxSize * 3/2 * (i)) - (textBoxSize * 3/4 * current_word.length() - textBoxSize/4);
+        int x_pos = (GetScreenWidth()/2) + (TEXTBOXSIZE * 3/2 * (i)) - (TEXTBOXSIZE * 3/4 * current_word.length() - TEXTBOXSIZE/4);
 
         if (i == typing_index){ //highlighted letter textbox
-            text.push_back(TextBox{x_pos, 280, current_word[i], font, textBoxColorHighlighted});
-            DrawRectangleLinesEx(Rectangle{(float) x_pos - 4, 276.0f, textBoxSize + 8.0f,  textBoxSize + 8.0f}, 2, Color{143, 139, 231, 255});
+            text.push_back(TextBox{x_pos, 280, current_word[i], font, TEXTBOXCOLORHIGHLIGHTED});
+            DrawRectangleLinesEx(Rectangle{(float) x_pos - 4, 276.0f, TEXTBOXSIZE + 8.0f,  TEXTBOXSIZE + 8.0f}, 2, Color{143, 139, 231, 255});
         
         } else { //normal letter textbox
-            text.push_back(TextBox{x_pos, 300, current_word[i], font, textBoxColor});
+            text.push_back(TextBox{x_pos, 300, current_word[i], font, TEXTBOXCOLOR});
         }
     }
 }
@@ -212,24 +253,24 @@ void TypingTrials::draw(std::vector<Texture2D> textures, Font font){
     DrawTextEx(font, 
         TextFormat("Next Word: %s", nextWord.c_str()),
         XYtoVector2(width/2 - MeasureText(TextFormat("Next Word: %s", nextWord.c_str()), 20)/2, height/2 + 25),
-        25, textSpacing, WHITE
+        25, TEXTSPACING, WHITE
     );
     //wpm
-    DrawTextEx(font, TextFormat("WPM: %d", wpm), XYtoVector2(width/2 - 180, height/2 + 100), 25, textSpacing, WHITE);
+    DrawTextEx(font, TextFormat("WPM: %d", wpm), XYtoVector2(width/2 - 180, height/2 + 100), 25, TEXTSPACING, WHITE);
     //count
     DrawTextEx(font, 
         TextFormat("Score: %d", wordTyped),
         XYtoVector2(width/2 + 188 - MeasureText(TextFormat("Score: %d", wordTyped), 20),
         height/2 + 100),
-        25, textSpacing, WHITE
+        25, TEXTSPACING, WHITE
     );
 
-    source = Rectangle{idleIndex * textBoxSize * 1.0f, 0.0f, 60.0f, 60.0f};
+    source = Rectangle{idleIndex * TEXTBOXSIZE * 1.0f, 0.0f, 60.0f, 60.0f};
 
     DrawWordOnScreen(currentWord, typingIndex, font);
 
     DrawTextureRec(textures[1], source, Vector2{
-        ((GetScreenWidth()/2) + (textBoxSize * 3/2 * (typingIndex)) - (textBoxSize * 3/4 * currentWord.length() - textBoxSize/4) * 1.0f)
+        ((GetScreenWidth()/2) + (TEXTBOXSIZE * 3/2 * (typingIndex)) - (TEXTBOXSIZE * 3/4 * currentWord.length() - TEXTBOXSIZE/4) * 1.0f)
         , 220}, WHITE);
     EndDrawing();
 }
@@ -262,38 +303,38 @@ void GameScreen::drawScore(std::vector<Texture2D> textures, Font font) {
             (width/2) - ((MeasureText(TextFormat("m i s t a k e s: %d", incorrectLetters), 40) + 80)/2),
             height/2 - 200,
             (MeasureText(TextFormat("m i s t a k e s: %d", incorrectLetters), 40)) + 80,
-            height/2 + 40, textBoxColor
+            height/2 + 40, TEXTBOXCOLOR
         );
 
         DrawTextEx(font, 
             TextFormat("S C O R E"),
             XYtoVector2((width/2) - ((MeasureText(TextFormat("S C O R E"), 60) - 120)/2),
-            height/2 - 140), 60, textSpacing, WHITE
+            height/2 - 140), 60, TEXTSPACING, WHITE
         );
 
         //wpm
         DrawTextEx(font, 
             TextFormat("w p m: %d", wpm),
             XYtoVector2((width/2) - (((MeasureText(TextFormat("w p m: %d", wpm), 40) - 40)/2)),
-            height/2 - 60), 40, textSpacing, textColor
+            height/2 - 80), 40, TEXTSPACING, TEXTCOLOR
         );
 
         //incorrect words
         DrawTextEx(font, 
             TextFormat("m i s t a k e s: %d", incorrectLetters),
             XYtoVector2((width/2) - (((MeasureText(TextFormat("m i s t a k e s: %d", incorrectLetters), 40) - 80)/2)),
-            height/2 - 20), 40, textSpacing, textColor
+            height/2 - 20), 40, TEXTSPACING, TEXTCOLOR
         );
 
         //count
         DrawTextEx(font, 
             TextFormat("s c o r e: %d", wordTyped),
             XYtoVector2((width/2) - (((MeasureText(TextFormat("s c o r e: %d", wordTyped), 40)) - 80)/2),
-            height/2 + 20), 40, textSpacing, textColor
+            height/2 + 40), 40, TEXTSPACING, TEXTCOLOR
         );
 
-        DrawRectangleRec(buttonNext, buttonClicked(buttonNext) ? textColor : WHITE);
-        DrawText("Next", buttonNext.x + 60, buttonNext.y + 15, 20, buttonClicked(buttonNext) ? WHITE : textColor);
+        DrawRectangleRec(buttonNext, buttonClicked(buttonNext) ? TEXTCOLOR : WHITE);
+        DrawText("Next", buttonNext.x + 80, buttonNext.y + 15, 20, buttonClicked(buttonNext) ? WHITE : TEXTCOLOR);
         DrawRectangleLinesEx(buttonNext, 2, Color{0, 0, 0, 255});
 
     EndDrawing();
@@ -369,24 +410,24 @@ void TickingTimeBomb::draw(std::vector<Texture2D> textures, Font font){
     DrawTextEx(font, 
         TextFormat("Next Word: %s", nextWord.c_str()),
         XYtoVector2(width/2 - MeasureText(TextFormat("Next Word: %s", nextWord.c_str()), 20)/2, height/2 + 25),
-        25, textSpacing, WHITE
+        25, TEXTSPACING, WHITE
     );
     //wpm
-    DrawTextEx(font, TextFormat("WPM: %d", wpm), XYtoVector2(width/2 - 180, height/2 + 100), 25, textSpacing, WHITE);
+    DrawTextEx(font, TextFormat("WPM: %d", wpm), XYtoVector2(width/2 - 180, height/2 + 100), 25, TEXTSPACING, WHITE);
     //count
     DrawTextEx(font, 
         TextFormat("Score: %d", wordTyped),
         XYtoVector2(width/2 + 188 - (MeasureText(TextFormat("Score: %d", wordTyped), 25)/2),
         height/2 + 100),
-        25, textSpacing, WHITE
+        25, TEXTSPACING, WHITE
     );
 
-    source = Rectangle{idleIndex * textBoxSize * 1.0f, 0.0f, 60.0f, 60.0f};
+    source = Rectangle{idleIndex * TEXTBOXSIZE * 1.0f, 0.0f, 60.0f, 60.0f};
 
     DrawWordOnScreen(currentWord, typingIndex, font);
 
     DrawTextureRec(textures[1], source, Vector2{
-        ((GetScreenWidth()/2) + (textBoxSize * 3/2 * (typingIndex)) - (textBoxSize * 3/4 * currentWord.length() - textBoxSize/4) * 1.0f)
+        ((GetScreenWidth()/2) + (TEXTBOXSIZE * 3/2 * (typingIndex)) - (TEXTBOXSIZE * 3/4 * currentWord.length() - TEXTBOXSIZE/4) * 1.0f)
         , 220}, WHITE);
     EndDrawing();
 }
@@ -404,6 +445,10 @@ void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen*>& modes)
     switch (gameState) {
         case titleScreen:
         // Update ----------------------------------------------------------------------------------
+
+            if(mainMenu.buttonClicked(mainMenu.getNameBox())){
+                mainMenu.typingName();
+            }
             if(mainMenu.buttonClicked(mainMenu.getButton1())){
                 gameState = mode1;
                 tt->reset();

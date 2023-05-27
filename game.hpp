@@ -1,5 +1,6 @@
 #ifndef game_HPP
 #define game_HPP
+#define MAX_INPUT_CHARS     9
 
 #include <raylib.h>
 #include <iostream>
@@ -20,6 +21,11 @@ namespace ns {
         std::vector<std::string> words;
     };
 }
+
+struct NameScore{
+    std::string name;
+    std::vector<int> score;
+};
 
 std::vector<std::string> jsonVec(ns::wordpool ns, std::string filename);
 
@@ -45,20 +51,27 @@ class MainScreen: public Screen{
 public:
     MainScreen(): Screen() { msg = ""; }
     MainScreen(std::string t): Screen() { msg = t; }
-    // bool buttonMode1Clicked();
-    // bool buttonMode2Clicked();
+
     void draw(std::vector<Texture2D> textures, Font font);
     Rectangle getButton1() { return buttonMode1; }
     Rectangle getButton2() { return buttonMode2; }
+    Rectangle getNameBox() {return nameBox;}
 
+    bool mouseOnText(Rectangle textbox);
+    void typingName();
 
 protected:
     std::string msg;
 private:
-    Rectangle buttonMode1 = {(width/2) - 100, (height/2) - 40, 200, 50};
-    Rectangle buttonMode2 = {(width/2) - 100, (height/2) + 40, 200, 50};
-    // bool buttonPressedMode1 = false;
-    // bool buttonPressedMode2 = false;
+    Rectangle buttonMode1 = {(width/2.0f) - 100, (height/2.0f) - 30, 200, 50};
+    Rectangle buttonMode2 = {(width/2.0f) - 100, (height/2.0f) + 30, 200, 50};
+    Rectangle practiceMode = {(width/2.0f) - 100, (height/2.0f) + 90, 200, 50};
+
+    Rectangle nameBox = { width/2.0f - 100, (height/2.0f) + 240, 200, 50 };
+    bool mouseonText = false;
+    char name[MAX_INPUT_CHARS + 1] = "\0";
+    int letterCount = 0;
+    int framesCounter = 0;
 
 
 };
@@ -108,7 +121,7 @@ protected:
     std::string currentWord;
     std::string nextWord;
     std::vector<std::string> wordPool;
-    Rectangle buttonNext = {(width/2) - 100, (height/2) + 100, 200, 50};
+    Rectangle buttonNext = {(width/2.0f) - 100, (height/2.0f) + 100, 200, 50};
     
 };
 
