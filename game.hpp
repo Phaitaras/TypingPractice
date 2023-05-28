@@ -8,12 +8,14 @@
 #include <sstream>
 #include <vector>
 #include <string>
+#include <list>
+#include <map>
 #include <assert.h>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
 
-enum GameState{titleScreen, mode1, mode2, endScreen, skipped};
+enum GameState{titleScreen, mode1, mode2, endScreen, skipped, scoreBoard1, scoreBoard2};
 
 namespace ns {
     struct wordpool {
@@ -23,8 +25,14 @@ namespace ns {
 }
 
 struct NameScore{
-    std::string name;
-    std::vector<int> score;
+    char name;
+    int score;
+};
+
+struct SortByWPMDesc {
+    bool operator()(const json& a, const json& b) const {
+        return a["wpm"] > b["wpm"];
+    }
 };
 
 std::vector<std::string> jsonVec(ns::wordpool ns, std::string filename);
@@ -56,18 +64,24 @@ public:
     Rectangle getButton1() { return buttonMode1; }
     Rectangle getButton2() { return buttonMode2; }
     Rectangle getNameBox() {return nameBox;}
-    char* getName() { return name; }
+    Rectangle getConfirmBox() {return confirmNameBox;}
+    virtual std::string getName();
+    void setName();
 
     bool mouseOnText(Rectangle textbox);
     void typingName();
+    void drawNameBox();
+    void drawScoreBoard();
 protected:
     std::string msg;
+    std::string finalName;
 private:
     Rectangle buttonMode1 = {(width/2.0f) - 100, (height/2.0f) - 30, 200, 50};
     Rectangle buttonMode2 = {(width/2.0f) - 100, (height/2.0f) + 30, 200, 50};
     Rectangle practiceMode = {(width/2.0f) - 100, (height/2.0f) + 90, 200, 50};
 
     Rectangle nameBox = { width/2.0f - 100, (height/2.0f) + 240, 200, 50 };
+    Rectangle confirmNameBox = { width/2.0f + 115, (height/2.0f) + 240, 35, 50 };
     bool mouseonText = false;
     char name[MAX_INPUT_CHARS + 1] = "\0";
     int letterCount = 0;
@@ -98,6 +112,8 @@ public:
     int getIdleIndex() { return idleIndex; }
     int getWordsTyped() { return wordTyped; }
     Rectangle getButtonNext() { return buttonNext; }
+    Rectangle getButtonScoreBoard() {return buttonScoreBoard;}
+    virtual std::string getName() {return this->getName();}
 
     //add-reduct
     void framesCount() { --frames; }
@@ -107,6 +123,10 @@ public:
     virtual void draw(std::vector<Texture2D> textures, Font font) = 0;
     virtual void update(char key) = 0;
     virtual void drawScore(std::vector<Texture2D> textures, Font font);
+
+    virtual json getPlayerData() = 0;
+    virtual void scoreBoard() = 0;
+    virtual void sortPlayerData(std::vector<json>& playerData);
 protected:
     int typingIndex;
     int idleIndex = 0;
@@ -119,6 +139,7 @@ protected:
     std::string nextWord;
     std::vector<std::string> wordPool;
     Rectangle buttonNext = {(width/2.0f) - 100, (height/2.0f) + 100, 200, 50};
+    Rectangle buttonScoreBoard = {(width/2.0f) - 100, (height/2.0f) + 250, 200, 50};
     
 };
 
@@ -129,6 +150,9 @@ public:
     void draw(std::vector<Texture2D> textures, Font font);
     void update(char key);
     void reset();
+
+    json getPlayerData();
+    void scoreBoard();
 private:
     const int FRAME = 3600; //60sec
 };
@@ -140,6 +164,9 @@ public:
     void draw(std::vector<Texture2D> textures, Font font);
     void update(char key);
     void reset();
+
+    json getPlayerData();
+    void scoreBoard();
 private:
     const int FRAME = 480; //8sec
 };
@@ -151,7 +178,7 @@ public:
     Game& operator=(const Game& other) = delete;
     ~Game() noexcept;
     bool GameShouldClose() const;
-    void Tick(std::vector<MainScreen>& mains, std::vector<GameScreen*>& modes);
+    void Tick(std::vector<MainScreen*>& mains, std::vector<GameScreen*>& modes);
 protected:
     int width, height;
     GameState gameState;

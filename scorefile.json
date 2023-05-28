@@ -1,0 +1,12 @@
+{
+    "TypingTrials": {
+        "player": [
+          { "name": "John", "score": 26, "wpm": 26 },
+          { "name": "Jack", "score": 44 , "wpm": 43},
+          { "name": "Mind", "score": 33, "wpm": 28}
+        ]
+    },
+    "TickingTimeBomb": {
+        "player": []
+    }
+}
