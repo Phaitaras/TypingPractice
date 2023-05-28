@@ -288,10 +288,11 @@ void MainScreen::addPlayerData(GameScreen* gameScreen, std::string mode) {
 
 
 
-void MainScreen::drawScoreBoard(std::vector<Texture2D> textures, Font font,const std::string& mode) {
+void MainScreen::drawScoreBoard(std::vector<Texture2D> textures, Font font,std::string mode) {
     json jsonData = loadJsonFile();
     json playerData = jsonData[mode]["player"];
     int numPlayers = std::min(10, static_cast<int>(playerData.size()));
+    std::string modetype = "Mode: " + mode;
 
     BeginDrawing();
         ClearBackground(WHITE);
@@ -314,6 +315,7 @@ void MainScreen::drawScoreBoard(std::vector<Texture2D> textures, Font font,const
 
         // Draw the headers
         DrawText("Top Ten Players", leaderboardX + 10, leaderboardY + 10, 20, WHITE);
+        DrawText(modetype.c_str(), leaderboardX + 300, leaderboardY + 10, 20, WHITE);
         DrawText("Name", leaderboardX + 50, leaderboardY + 50, 20, WHITE);
         DrawText("Score", leaderboardX + 300, leaderboardY + 50, 20, WHITE);
         DrawText("WPM", leaderboardX + 500, leaderboardY + 50, 20, WHITE);
@@ -729,13 +731,14 @@ void Game::Tick(std::vector<MainScreen*>& mains, std::vector<GameScreen*>& modes
                 mainMenu->setName();
             }
             if(mainMenu->buttonClicked(mainMenu->getButton1())){
-                mainMenu->addPlayerName(tt, "TypingTrials");
-                PlaySound(sounds[3]);
                 gameState = mode1;
+                PlaySound(sounds[3]);
+                mainMenu->addPlayerName(tt, "TypingTrials");
                 tt->reset();
             }
             if(mainMenu->buttonClicked(mainMenu->getButton2())){
                 gameState = mode2;
+                PlaySound(sounds[3]);
                 mainMenu->addPlayerName(ttb, "TickingTimeBomb");
                 ttb->reset();
             }
@@ -767,7 +770,6 @@ void Game::Tick(std::vector<MainScreen*>& mains, std::vector<GameScreen*>& modes
                 }
                 tt->drawScore(textures, font);
 
-
             } else if (!tt->getCharacterSelectMenu()){
                 tt->draw(textures, font);
                 
@@ -798,6 +800,11 @@ void Game::Tick(std::vector<MainScreen*>& mains, std::vector<GameScreen*>& modes
             //force quit
             if (IsKeyPressed(KEY_LEFT_CONTROL)) gameState = endScreen;
 
+            break;
+
+        case scoreBoard1:
+            mainMenu->drawScoreBoard(textures, font, "TypingTrials");
+            if(mainMenu->buttonClicked(mainMenu->getButtonBack())) gameState = mode1;
             break;
 
         case mode2:
@@ -845,6 +852,12 @@ void Game::Tick(std::vector<MainScreen*>& mains, std::vector<GameScreen*>& modes
             if (IsKeyPressed(KEY_LEFT_CONTROL)) gameState = endScreen;
 
             break;
+        
+        case scoreBoard2:
+            mainMenu->drawScoreBoard(textures, font, "TickingTimeBomb");
+            if(mainMenu->buttonClicked(mainMenu->getButtonBack())) gameState = mode2;
+            break;
+
         case practicemode:
             ptm->update(GetCharPressed(), sounds);
 
@@ -888,15 +901,17 @@ void Game::Tick(std::vector<MainScreen*>& mains, std::vector<GameScreen*>& modes
                 PlaySound(sounds[3]);
                 gameState = mode1;
                 tt->reset();
-                // tt->setCurrentWord(modes[0]->getRandomWord(word_pool));
-                // tt->setNextWord(modes[0]->getRandomWord(word_pool));
+
             }
             if(end->buttonClicked(end->getButton2())){
                 PlaySound(sounds[3]);
                 gameState = mode2;
                 ttb->reset();
-                // ttb->setCurrentWord(modes[0]->getRandomWord(word_pool));
-                // ttb->setNextWord(modes[0]->getRandomWord(word_pool));
+            }
+            if(end->buttonClicked(end->getPracticeButton())){
+                PlaySound(sounds[3]);
+                gameState = mode2;
+                ttb->reset();
             }
         // Update ----------------------------------------------------------------------------------
             if (IsKeyPressed(KEY_A)) {
@@ -908,12 +923,8 @@ void Game::Tick(std::vector<MainScreen*>& mains, std::vector<GameScreen*>& modes
                 end->draw(textures, font);
             EndDrawing();
             break;
-        case scoreBoard1:
-            mainMenu->drawScoreBoard(textures, font, "TypingTrials");
-            if(mainMenu->buttonClicked(mainMenu->getButtonBack())) gameState = mode1;
-        case scoreBoard2:
-            mainMenu->drawScoreBoard(textures, font, "TickingTimeBomb");
-            if(mainMenu->buttonClicked(mainMenu->getButtonBack())) gameState = mode2;
+
+        
     }  
 }
 

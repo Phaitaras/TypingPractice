@@ -173,7 +173,7 @@ public:
     void addPlayerName(GameScreen* gameScreen, std::string mode);
     void addPlayerData(GameScreen* gameScreen, std::string mode);
     void saveJsonFile(const json& jsonData);
-    void drawScoreBoard(std::vector<Texture2D> textures, Font font,const std::string& mode);
+    void drawScoreBoard(std::vector<Texture2D> textures, Font font,std::string mode);
 protected:
     std::string msg;
     std::string finalName;
