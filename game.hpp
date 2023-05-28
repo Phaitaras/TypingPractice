@@ -117,6 +117,8 @@ public:
     Rectangle getButtonScoreBoard() {return buttonScoreBoard;}
     virtual std::string getName() {return this->getName();}
     bool getCharacterSelectMenu() { return characterSelectMenu; }
+    virtual json getPlayerData() = 0;
+
 
     //add-reduct
     void framesCount() { --frames; }
@@ -126,6 +128,10 @@ public:
     virtual void draw(std::vector<Texture2D> textures, Font font) = 0;
     virtual void update(char key, std::vector<Sound> sounds) = 0;
     virtual void drawScore(std::vector<Texture2D> textures, Font font);
+    virtual void drawCharacterSelection(std::vector<Texture2D> textures, Font font);
+    virtual void scoreBoard();
+
+
 protected:
     bool characterSelectMenu = true;
     int characterIndex;

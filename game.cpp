@@ -270,11 +270,11 @@ bool GameScreen::timesUp() {
     return frames < 0;
 }
 
-void GameScreen::sortPlayerData(std::vector<json>& playerData) {
-    std::sort(playerData.begin(), playerData.end(), [](const json& a, const json& b) {
-        return a["wpm"] > b["wpm"]; 
-    });
-}
+// void GameScreen::sortPlayerData(std::vector<json>& playerData) {
+//     std::sort(playerData.begin(), playerData.end(), [](const json& a, const json& b) {
+//         return a["wpm"] > b["wpm"]; 
+//     });
+// }
 
 void GameScreen::drawScore(std::vector<Texture2D> textures, Font font) {
     BeginDrawing();
@@ -323,7 +323,7 @@ void GameScreen::drawScore(std::vector<Texture2D> textures, Font font) {
         DrawRectangleLinesEx(buttonNext, 2, Color{0, 0, 0, 255});
 
         DrawRectangleRec(buttonScoreBoard, buttonClicked(buttonScoreBoard) ? WHITE : TEXT_COLOR);
-        DrawText("ScoreBoard", buttonScoreBoard.x + 10, buttonScoreBoard.y + 10, 20, buttonClicked(buttonScoreBoard) ? TEXT_COLOR : WHITE);
+        DrawText("Scoreboard", buttonScoreBoard.x + 40, buttonScoreBoard.y + 15, 20, buttonClicked(buttonScoreBoard) ? TEXT_COLOR : WHITE);
         DrawRectangleLinesEx(buttonScoreBoard, 2, Color{0, 0, 0, 255});
 
     EndDrawing();
@@ -626,7 +626,7 @@ void TickingTimeBomb::scoreBoard(){
 
 char key;
 
-void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen*>& modes) {
+void Game::Tick(std::vector<MainScreen*>& mains, std::vector<GameScreen*>& modes) {
     //Update all
     //...
     GameScreen* tt = modes[0];
@@ -647,7 +647,7 @@ void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen*>& modes)
                 gameState = mode1;
                 tt->reset();
             }
-            if(mainMenu.buttonClicked(mainMenu.getButton2())){
+            if(mainMenu->buttonClicked(mainMenu->getButton2())){
                 gameState = mode2;
                 ttb->reset();
             }
