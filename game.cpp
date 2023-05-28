@@ -55,7 +55,7 @@ Game::Game(int width, int height, std::string title): width(width), height(heigh
     //fonts
     //font = LoadFontEx("../assets/rainyhearts.ttf", 30, 0, 0);
     font = LoadFontEx("../assets/levi-windows.ttf", 25, 0, 0);
-    icon = LoadImage("../assets/icon2.png");
+    icon = LoadImage("../assets/sprites/icon2.png");
     SetWindowIcon(icon);
 
     //init dictionary/wordpool
@@ -97,7 +97,7 @@ TextBox::TextBox(int x, int y, char letter, Font font, Color color): letter(lett
 Screen::Screen(int w, int h) {
     width = w;
     height = h;
-    SetTargetFPS(10);
+    
 }
 
 bool Screen::buttonClicked(Rectangle button) {
@@ -109,6 +109,9 @@ bool Screen::buttonClicked(Rectangle button) {
 }
 
 //MainScreen functions
+
+
+
 bool MainScreen::mouseOnText(Rectangle textbox){
     mouseonText = false;
     if (CheckCollisionPointRec(GetMousePosition(), textbox)) mouseonText = true;
@@ -217,6 +220,130 @@ void MainScreen::drawNameBox(){
 }
 
 
+json MainScreen::loadJsonFile() {
+    std::ifstream file("../scorefile.json");
+    if (!file) {
+        std::cerr << "Error opening file.\n";
+    }
+
+    json jsonData;
+    file >> jsonData;
+
+    return jsonData;
+}
+
+void MainScreen::saveJsonFile(const json& jsonData) {
+    std::ofstream outputFile("../scorefile.json");
+    if (!outputFile) {
+        std::cerr << "Error opening file for writing.\n";
+    }
+
+    outputFile << std::setw(4) << jsonData << std::endl;
+    std::cout << "File updated successfully.\n";
+}
+
+void MainScreen::addPlayerName(GameScreen* gameScreen, std::string mode) {
+    json newPlayer = {
+        {"name", getName()},
+    };
+
+    json jsonData = loadJsonFile();
+    json& playerData = jsonData[mode]["player"];
+
+    playerData.push_back(newPlayer);
+
+    saveJsonFile(jsonData);
+}
+
+void MainScreen::addPlayerData(GameScreen* gameScreen, std::string mode) {
+    json jsonData = loadJsonFile();
+    json& playerData = jsonData[mode]["player"];
+
+    // Find the player's entry based on their name
+    std::string playerName = getName();
+    bool foundPlayer = false;
+
+    for (json& player : playerData) {
+        if (player["name"] == playerName && !player.contains("score") && !player.contains("wpm")) {
+            player["score"] = gameScreen->getWordsTyped();
+            player["wpm"] = gameScreen->getWPM();
+            foundPlayer = true;
+            break; 
+        }
+    }
+
+    if (!foundPlayer) {
+        json newPlayer = {
+            {"name", playerName},
+            {"score", gameScreen->getWordsTyped()},
+            {"wpm", gameScreen->getWPM()}
+        };
+        playerData.push_back(newPlayer);
+    }
+
+    std::sort(playerData.begin(), playerData.end(), SortByWPMDesc());
+    saveJsonFile(jsonData);
+}
+
+
+
+
+void MainScreen::drawScoreBoard(std::vector<Texture2D> textures, Font font,const std::string& mode) {
+    json jsonData = loadJsonFile();
+    json playerData = jsonData[mode]["player"];
+    int numPlayers = std::min(10, static_cast<int>(playerData.size()));
+
+    BeginDrawing();
+        ClearBackground(WHITE);
+        DrawTexture(textures[2], backgroundPos, backgroundPos - 8, Color{255, 255, 255, 75});
+        DrawRectangleRec(buttonBack, buttonClicked(buttonBack) ? WHITE : TEXT_COLOR);
+        DrawText("<--", buttonBack.x + 10, buttonBack.y + 10, 20, buttonClicked(buttonBack) ? TEXT_COLOR : WHITE);
+
+
+
+        int leaderboardWidth = 600.0f;
+        int leaderboardHeight = (numPlayers + 1.0f) * 30.0f + 50.0f; 
+
+        int leaderboardX = width/ 2.0f - leaderboardWidth / 2.0f;
+        int leaderboardY = height / 2.0f - leaderboardHeight / 2.0f;
+
+        Rectangle leaderboardRect{ leaderboardX, leaderboardY, leaderboardWidth, leaderboardHeight};
+
+        // Draw the background rectangle for the leaderboard
+        DrawRectangleRec(leaderboardRect, TEXT_COLOR);
+
+        // Draw the headers
+        DrawText("Top Ten Players", leaderboardX + 10, leaderboardY + 10, 20, WHITE);
+        DrawText("Name", leaderboardX + 50, leaderboardY + 50, 20, WHITE);
+        DrawText("Score", leaderboardX + 300, leaderboardY + 50, 20, WHITE);
+        DrawText("WPM", leaderboardX + 500, leaderboardY + 50, 20, WHITE);
+
+        // Draw the player entries
+        for (int i = 0; i < numPlayers; i++) {
+            std::string name = playerData[i]["name"];
+            int score = playerData[i]["score"];
+            int wpm = playerData[i]["wpm"];
+
+            int yPos = leaderboardY + 80 + i * 30;
+
+            // Use alternating colors for odd and even rows
+            Color rowColor = (i % 2 == 0) ? TEXT_BOX_COLOR : TEXT_BOX_COLOR_HIGHLIGHTED;
+
+            // Draw the background rectangle for the row
+            DrawRectangle(leaderboardX + 10, yPos, leaderboardWidth - 20, 30, rowColor);
+
+            // Draw the player information
+            DrawText(name.c_str(), leaderboardX + 50, yPos + 5, 20, BLACK);
+            DrawText(std::to_string(score).c_str(), leaderboardX + 300, yPos + 5, 20, BLACK);
+            DrawText(std::to_string(wpm).c_str(), leaderboardX + 500, yPos + 5, 20, BLACK);
+        }
+
+    EndDrawing();
+}
+
+
+
+
 
 //GameScreen functions
 GameScreen::GameScreen() : Screen(), typingIndex(0), idleIndex(0), wpm(0), wordTyped(0), frames(0), lettersTyped(0), incorrectLetters(0) {
@@ -225,7 +352,7 @@ GameScreen::GameScreen() : Screen(), typingIndex(0), idleIndex(0), wpm(0), wordT
     this->wordPool = jsonVec(eng, "../words.json");
     setCurrentWord(getRandomWord(wordPool));
     setNextWord(getRandomWord(wordPool));
-}
+}   
 
 GameScreen::GameScreen(int index, int idleIndex, int speed, int typed, int f, int w, int h)
     : Screen(w, h), typingIndex(index), idleIndex(idleIndex), wpm(speed), wordTyped(typed), lettersTyped(0), incorrectLetters(0), frames(f) {
@@ -270,11 +397,6 @@ bool GameScreen::timesUp() {
     return frames < 0;
 }
 
-// void GameScreen::sortPlayerData(std::vector<json>& playerData) {
-//     std::sort(playerData.begin(), playerData.end(), [](const json& a, const json& b) {
-//         return a["wpm"] > b["wpm"]; 
-//     });
-// }
 
 void GameScreen::drawScore(std::vector<Texture2D> textures, Font font) {
     BeginDrawing();
@@ -435,70 +557,15 @@ void TypingTrials::reset() {
     nextWord = getRandomWord(wordPool);
 }
 
-json TypingTrials::getPlayerData(){
-    std::ifstream file("../scorefile.json");
-    if (!file) {
-        std::cerr << "Error opening file.\n";
-    }
-    json jsonFile;
-    file >> jsonFile;
 
-    json playerData = jsonFile["TypingTrials"]["player"];
 
-    json newPlayer = {
-        {"name", getName()},
-        {"score", wordTyped},
-        {"wpm", wpm}
-    };
 
-    std::cout  << " " << wordTyped << " " << wpm << std::endl;
-
-    playerData.push_back(newPlayer);
-
-    std::sort(playerData.begin(), playerData.end(), SortByWPMDesc());
-
-    std::ofstream outputFile("../data.json");
-    if (!outputFile) {
-        std::cerr << "Error opening file for writing.\n";
-    }
-
-    outputFile << std::setw(4) << playerData << std::endl;
-    std::cout << "File updated successfully.\n";
-
-    return playerData;
-    
-
-}
-
-void TypingTrials::scoreBoard(){
-    BeginDrawing();
-        ClearBackground(WHITE);
-        json playerData = getPlayerData();
-        int numPlayers = std::min(10, static_cast<int>(playerData.size()));
-
-        DrawText("Top Ten Players", 10, 10, 20, BLACK);
-        DrawText("Name", 50, 50, 20, BLACK);
-        DrawText("Score", 300, 50, 20, BLACK);
-        DrawText("WPM", 500, 50, 20, BLACK);
-        for (int i = 0; i < numPlayers; i++) {
-            std::string name = playerData[i]["name"];
-            int score = playerData[i]["score"];
-            int wpm = playerData[i]["wpm"];
-            
-            int yPos = 80 + i * 30;
-            
-            DrawText(name.c_str(), 50, yPos, 20, BLACK);
-            DrawText(std::to_string(score).c_str(), 300, yPos, 20, BLACK);
-            DrawText(std::to_string(wpm).c_str(), 500, yPos, 20, BLACK);
-            }
-    EndDrawing();
-
-}
 
 //Ticking Time Bomb functions
 TickingTimeBomb::TickingTimeBomb() : GameScreen(){
     frames = FRAME;
 }
+
 
 void TickingTimeBomb::reset() {
     frames = FRAME;
@@ -514,7 +581,7 @@ void TickingTimeBomb::reset() {
 
 void TickingTimeBomb::typedWord(){
     ++wordTyped;
-    wpm = (int)wordTyped * FRAME / (FRAME - frames);
+    ++totalframes;
     typingIndex = 0;
     setCurrentWord(nextWord);
     setNextWord(getRandomWord(wordPool));
@@ -549,7 +616,7 @@ void TickingTimeBomb::draw(std::vector<Texture2D> textures, Font font){
 
     //timer bar
     DrawRectangleLines(width/2 - 180, 420, 368, 28, WHITE);
-    DrawRectangle(width/2 - 176, 424, frames - 120, 20, WHITE);
+    DrawRectangle(width/2 - 176, 424, frames + 5, 20, WHITE);
 
     //next word
     DrawTextEx(font, 
@@ -577,53 +644,87 @@ void TickingTimeBomb::draw(std::vector<Texture2D> textures, Font font){
     EndDrawing();
 }
 
-json TickingTimeBomb::getPlayerData(){
-    std::ifstream file("../scorefile.json");
-    if (!file) {
-        std::cerr << "Error opening file.\n";
-    }
-    json jsonFile;
-    file >> jsonFile;
-
-    json playerData = jsonFile["TypingTrials"]["player"];
-
-    json newPlayer = {
-        {"name", getName()},
-        {"score", wordTyped},
-        {"wpm", wpm}
-    };
-
-    std::cout  << " " << wordTyped << " " << wpm << std::endl;
-
-    playerData.push_back(newPlayer);
-
-    std::sort(playerData.begin(), playerData.end(), SortByWPMDesc());
-
-    std::ofstream outputFile("../data.json");
-    if (!outputFile) {
-        std::cerr << "Error opening file for writing.\n";
-    }
-
-    outputFile << std::setw(4) << playerData << std::endl;
-    std::cout << "File updated successfully.\n";
-
-    return playerData;
-    
-
+PracticeMode::PracticeMode() : GameScreen(){
+    frames = FRAME;
 }
 
-void TickingTimeBomb::scoreBoard(){
-    std::ifstream file("../scorefile.json");
-    if (!file) {
-        std::cerr << "Error opening file.\n";
-    }
-    json jsonFile;
-    file >> jsonFile;
+void PracticeMode::reset(){
+    frames = FRAME;
+    wpm = 0;
+    typingIndex = 0;
+    wordTyped = 0;
+    incorrectLetters = 0;
+    lettersTyped = 0;
+    characterSelectMenu = true;
+    currentWord = getRandomWord(wordPool);
+    nextWord = getRandomWord(wordPool);
 
-    json playerData = jsonFile["TypingTrials"]["player"];  
+}
+void PracticeMode::update(char key, std::vector<Sound> sounds){
+    framesCount();
+    if (typedLetter(key)) {
+        ++lettersTyped;
+        ++typingIndex;
+    }
+    else if (key > 0 && !timesUp()) {
+        ++incorrectLetters;
+    }
+    if(typingIndex >= currentWord.size()) {
+        PlaySound(sounds[1]);
+        typedWord();
+    } 
 }
 
+void PracticeMode::typedWord(){
+    ++wordTyped;
+    typingIndex = 0;
+    setCurrentWord(nextWord);
+    setNextWord(getRandomWord(wordPool));
+}
 
+void PracticeMode::draw(std::vector<Texture2D> textures, Font font){
+    BeginDrawing();
+    ClearBackground(Color{245, 240, 255, 255});
+
+    DrawTexture(textures[2], backgroundPos, backgroundPos - 8, Color{255, 255, 255, 75});
+    DrawRectangleRec(buttonBack, buttonClicked(buttonBack) ? WHITE : TEXT_COLOR);
+    DrawText("<--", buttonBack.x + 10, buttonBack.y + 10, 20, buttonClicked(buttonBack) ? TEXT_COLOR : WHITE);
+
+    //background
+    DrawTexture(textures[2], backgroundPos, backgroundPos - 8, Color{255, 255, 255, 75});
+
+    //stage
+    DrawTexture(textures[3], 0, 0, WHITE);
+
+    //timer bar
+    DrawRectangleLines(width/2 - 180, 420, 368, 28, WHITE);
+    DrawRectangle(width/2 - 176, 424, frames + 5, 20, WHITE);
+
+    //next word
+    DrawTextEx(font, 
+        TextFormat("Next Word: %s", nextWord.c_str()),
+        XYtoVector2(width/2 - MeasureText(TextFormat("Next Word: %s", nextWord.c_str()), 20)/2, height/2 + 25),
+        25, TEXT_SPACING, WHITE
+    );
+    //wpm
+    DrawTextEx(font, TextFormat("WPM: %d", wpm), XYtoVector2(width/2 - 180, height/2 + 100), 25, TEXT_SPACING, WHITE);
+    //count
+    DrawTextEx(font, 
+        TextFormat("Score: %d", wordTyped),
+        XYtoVector2(width/2 + 188 - (MeasureText(TextFormat("Score: %d", wordTyped), 25)/2),
+        height/2 + 100),
+        25, TEXT_SPACING, WHITE
+    );
+
+    source = Rectangle{idleIndex * TEXT_BOX_SIZE * 1.0f, 0.0f, 60.0f, 60.0f};
+
+    DrawWordOnScreen(currentWord, typingIndex, font);
+
+    DrawTextureRec(textures[characterIndex], source, Vector2{
+        ((GetScreenWidth()/2) + (TEXT_BOX_SIZE * 3/2 * (typingIndex)) - (TEXT_BOX_SIZE * 3/4 * currentWord.length() - TEXT_BOX_SIZE/4) * 1.0f)
+        , 220}, WHITE);
+    EndDrawing();
+}
 char key;
 
 void Game::Tick(std::vector<MainScreen*>& mains, std::vector<GameScreen*>& modes) {
@@ -631,8 +732,10 @@ void Game::Tick(std::vector<MainScreen*>& mains, std::vector<GameScreen*>& modes
     //...
     GameScreen* tt = modes[0];
     GameScreen* ttb = modes[1];
+    GameScreen* ptm = modes[2];
     MainScreen* mainMenu = mains[0];
     MainScreen* end = mains[1];
+
 
     switch (gameState) {
         case titleScreen:
@@ -643,13 +746,18 @@ void Game::Tick(std::vector<MainScreen*>& mains, std::vector<GameScreen*>& modes
                 mainMenu->setName();
             }
             if(mainMenu->buttonClicked(mainMenu->getButton1())){
+                mainMenu->addPlayerName(tt, "TypingTrials");
                 PlaySound(sounds[3]);
                 gameState = mode1;
                 tt->reset();
             }
             if(mainMenu->buttonClicked(mainMenu->getButton2())){
                 gameState = mode2;
+                mainMenu->addPlayerName(ttb, "TickingTimeBomb");
                 ttb->reset();
+            }
+            if(mainMenu->buttonClicked(mainMenu->getPracticeButton())){
+                gameState = practicemode;
             }
             //forcequit
             // if (IsKeyPressed(KEY_LEFT_CONTROL)) {
@@ -670,10 +778,15 @@ void Game::Tick(std::vector<MainScreen*>& mains, std::vector<GameScreen*>& modes
             if (tt->timesUp() && !tt->getCharacterSelectMenu()){
                 if (tt->buttonClicked(tt->getButtonNext()))  gameState = endScreen;
                     PlaySound(sounds[2]);
-                if (ttb->buttonClicked(ttb->getButtonScoreBoard())) gameState = scoreBoard1;
+                if (tt->buttonClicked(tt->getButtonScoreBoard())){
+                    mainMenu->addPlayerData(tt, "TypingTrials");
+                    gameState = scoreBoard1;
+                }
                 tt->drawScore(textures, font);
 
+
             } else if (!tt->getCharacterSelectMenu()){
+                std::cout << mainMenu->getName();
                 tt->draw(textures, font);
                 
             } else {
@@ -708,14 +821,14 @@ void Game::Tick(std::vector<MainScreen*>& mains, std::vector<GameScreen*>& modes
         case mode2:
              // Update ----------------------------------------------------------------------------------
             ttb->update(GetCharPressed(), sounds);
-            std::cout << ttb->getFrames() % 30 << "\n";
 
             //timer
             if (ttb->timesUp() && !ttb->getCharacterSelectMenu()){
-                if (ttb->buttonClicked(ttb->getButtonNext())) {
-                    gameState = endScreen;
-                if (ttb->buttonClicked(ttb->getButtonScoreBoard())) gameState = scoreBoard2;
-                    PlaySound(sounds[2]);
+                if (ttb->buttonClicked(ttb->getButtonNext())) gameState = endScreen;
+                PlaySound(sounds[2]);
+                if (ttb->buttonClicked(ttb->getButtonScoreBoard())){
+                    mainMenu->addPlayerData(ttb, "TickingTimeBomb");
+                    gameState = scoreBoard2;
                 }
                 ttb->drawScore(textures, font);
 
@@ -750,7 +863,42 @@ void Game::Tick(std::vector<MainScreen*>& mains, std::vector<GameScreen*>& modes
             if (IsKeyPressed(KEY_LEFT_CONTROL)) gameState = endScreen;
 
             break;
-        
+        case practicemode:
+            ptm->update(GetCharPressed(), sounds);
+
+            //timer
+            if (!ttb->getCharacterSelectMenu()){
+                if (ptm->buttonClicked(ptm->getButtonBack())) gameState = titleScreen;
+                ptm->draw(textures, font);
+                
+            } else {
+                //character selection
+                if (ptm->buttonClicked(Rectangle{width/2.0f-270.0f, 125, source.width * 4, source.height * 4})){
+                    PlaySound(sounds[3]);
+                    ptm->setCharacterIndex(0);
+                    ptm->setCharacterSelectMenu(false);
+                    ptm->resetFrames();
+                }
+                if (ptm->buttonClicked(Rectangle{width/2.0f+30.0f, 125, source.width * 4, source.height * 4})){
+                    PlaySound(sounds[3]);
+                    ptm->setCharacterIndex(1);
+                    ptm->setCharacterSelectMenu(false);
+                    ptm->resetFrames();
+                }
+                ptm->drawCharacterSelection(textures, font);
+            }
+
+            //character animation
+            if (ptm->getFrames() % 30 == 0 && ttb->getIdleIndex() < 1){
+                ptm->setIdleIndex(1);
+            } else if (ptm->getFrames() % 30 == 0 && ptm->getIdleIndex() > 0){
+                ptm->setIdleIndex(0);
+            }
+
+            //force quit
+            if (IsKeyPressed(KEY_LEFT_CONTROL)) gameState = endScreen;
+
+            break;
         case endScreen:
             if (end->buttonClicked(end->getButton1())){
                 PlaySound(sounds[3]);
@@ -777,7 +925,11 @@ void Game::Tick(std::vector<MainScreen*>& mains, std::vector<GameScreen*>& modes
             EndDrawing();
             break;
         case scoreBoard1:
-            tt->scoreBoard();
+            mainMenu->drawScoreBoard(textures, font, "TypingTrials");
+            if(mainMenu->buttonClicked(mainMenu->getButtonBack())) gameState = mode1;
+        case scoreBoard2:
+            mainMenu->drawScoreBoard(textures, font, "TickingTimeBomb");
+            if(mainMenu->buttonClicked(mainMenu->getButtonBack())) gameState = mode2;
     }  
 }
 

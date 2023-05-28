@@ -1,12 +1,40 @@
 {
-    "TypingTrials": {
+    "TickingTimeBomb": {
         "player": [
-          { "name": "John", "score": 26, "wpm": 26 },
-          { "name": "Jack", "score": 44 , "wpm": 43},
-          { "name": "Mind", "score": 33, "wpm": 28}
+            {
+                "name": "fay",
+                "score": 25,
+                "wpm": 0
+            },
+            {
+                "name": "fay",
+                "score": 12,
+                "wpm": 0
+            }
         ]
     },
-    "TickingTimeBomb": {
-        "player": []
+    "TypingTrials": {
+        "player": [
+            {
+                "name": "Unknown",
+                "score": 39,
+                "wpm": 39
+            },
+            {
+                "name": "Unknown",
+                "score": 35,
+                "wpm": 35
+            },
+            {
+                "name": "Unknown",
+                "score": 35,
+                "wpm": 35
+            },
+            {
+                "name": "Unknown",
+                "score": 1,
+                "wpm": 23
+            }
+        ]
     }
 }

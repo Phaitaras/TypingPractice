@@ -15,7 +15,7 @@
 
 using json = nlohmann::json;
 
-enum GameState{titleScreen, mode1, mode2, endScreen, skipped, scoreBoard1, scoreBoard2};
+enum GameState{titleScreen, mode1, mode2, practicemode, endScreen, skipped, scoreBoard1, scoreBoard2};
 
 namespace ns {
     struct wordpool {
@@ -31,7 +31,7 @@ struct NameScore{
 
 struct SortByWPMDesc {
     bool operator()(const json& a, const json& b) const {
-        return a["wpm"] > b["wpm"];
+        return a["score"] > b["score"];
     }
 };
 
@@ -52,41 +52,6 @@ public:
 protected:
     int width, height;
     bool buttonPressed;
-};
-
-//screen for displaying messages or info
-class MainScreen: public Screen{
-public:
-    MainScreen(): Screen() { msg = ""; }
-    MainScreen(std::string t): Screen() { msg = t; }
-
-    void draw(std::vector<Texture2D> textures, Font font);
-    Rectangle getButton1() { return buttonMode1; }
-    Rectangle getButton2() { return buttonMode2; }
-    Rectangle getNameBox() {return nameBox;}
-    Rectangle getConfirmBox() {return confirmNameBox;}
-    virtual std::string getName();
-    void setName();
-
-    bool mouseOnText(Rectangle textbox);
-    void typingName();
-    void drawNameBox();
-    void drawScoreBoard();
-protected:
-    std::string msg;
-    std::string finalName;
-private:
-    Rectangle buttonMode1 = {(width/2.0f) - 100, (height/2.0f) - 30, 200, 50};
-    Rectangle buttonMode2 = {(width/2.0f) - 100, (height/2.0f) + 30, 200, 50};
-    Rectangle practiceMode = {(width/2.0f) - 100, (height/2.0f) + 90, 200, 50};
-
-    Rectangle nameBox = { width/2.0f - 100, (height/2.0f) + 240, 200, 50 };
-    Rectangle confirmNameBox = { width/2.0f + 115, (height/2.0f) + 240, 35, 50 };
-    bool mouseonText = false;
-    char name[MAX_INPUT_CHARS + 1] = "\0";
-    int letterCount = 0;
-    int framesCounter = 0;
-
 };
 
 class GameScreen: public Screen{
@@ -115,10 +80,10 @@ public:
     int getWordsTyped() { return wordTyped; }
     Rectangle getButtonNext() { return buttonNext; }
     Rectangle getButtonScoreBoard() {return buttonScoreBoard;}
-    virtual std::string getName() {return this->getName();}
+    Rectangle getButtonBack() {return buttonBack;}
     bool getCharacterSelectMenu() { return characterSelectMenu; }
-    virtual json getPlayerData() = 0;
-
+    virtual int getWPM() { return wpm; }
+    virtual int getWordTyped() { return wordTyped; }
 
     //add-reduct
     void framesCount() { --frames; }
@@ -129,8 +94,6 @@ public:
     virtual void update(char key, std::vector<Sound> sounds) = 0;
     virtual void drawScore(std::vector<Texture2D> textures, Font font);
     virtual void drawCharacterSelection(std::vector<Texture2D> textures, Font font);
-    virtual void scoreBoard();
-
 
 protected:
     bool characterSelectMenu = true;
@@ -145,9 +108,10 @@ protected:
     std::string currentWord;
     std::string nextWord;
     std::vector<std::string> wordPool;
+    Rectangle buttonBack = {100, 100, 100, 50};
     Rectangle buttonNext = {(width/2.0f) - 100, (height/2.0f) + 100, 200, 50};
     Rectangle buttonScoreBoard = {(width/2.0f) - 100, (height/2.0f) + 250, 200, 50};
-    
+
 };
 
 class TypingTrials: public GameScreen{
@@ -157,9 +121,6 @@ public:
     void draw(std::vector<Texture2D> textures, Font font);
     void update(char key, std::vector<Sound> sounds);
     void reset();
-
-    json getPlayerData();
-    void scoreBoard();
     void resetFrames(){ frames = FRAME; }
 private:
     const int FRAME = 3600; //60sec
@@ -172,12 +133,66 @@ public:
     void draw(std::vector<Texture2D> textures, Font font);
     void update(char key, std::vector<Sound> sounds);
     void reset();
-
-    json getPlayerData();
-    void scoreBoard();
     void resetFrames(){ frames = FRAME; }
 private:
-    const int FRAME = 480; //8sec
+    const int FRAME = 300; // 5 sec
+    int totalframes;
+};
+
+class PracticeMode: public GameScreen{
+public: 
+    PracticeMode();
+    void typedWord();
+    void draw(std::vector<Texture2D> textures, Font font);
+    void update(char key, std::vector<Sound> sounds);
+    void reset();
+    void resetFrames(){ frames = FRAME; }
+private:
+    const int FRAME = 10000;
+};
+
+//screen for displaying messages or info
+class MainScreen: public Screen{
+public:
+    MainScreen(): Screen() { msg = ""; }
+    MainScreen(std::string t): Screen() { msg = t; }
+
+    void draw(std::vector<Texture2D> textures, Font font);
+    Rectangle getButton1() { return buttonMode1; }
+    Rectangle getButton2() { return buttonMode2; }
+    Rectangle getPracticeButton() {return practiceMode;}
+    Rectangle getNameBox() {return nameBox;}
+    Rectangle getConfirmBox() {return confirmNameBox;}
+    Rectangle getButtonBack() {return buttonBack;}
+    virtual std::string getName();
+    void setName();
+
+    bool mouseOnText(Rectangle textbox);
+    void typingName();
+    void drawNameBox();
+    json loadJsonFile();
+    void addPlayerName(GameScreen* gameScreen, std::string mode);
+    void addPlayerData(GameScreen* gameScreen, std::string mode);
+    void saveJsonFile(const json& jsonData);
+    void drawScoreBoard(std::vector<Texture2D> textures, Font font,const std::string& mode);
+protected:
+    std::string msg;
+    std::string finalName;
+private:
+    Rectangle buttonMode1 = {(width/2.0f) - 100, (height/2.0f) - 30, 200, 50};
+    Rectangle buttonMode2 = {(width/2.0f) - 100, (height/2.0f) + 30, 200, 50};
+    Rectangle practiceMode = {(width/2.0f) - 100, (height/2.0f) + 90, 200, 50};
+
+    Rectangle nameBox = { width/2.0f - 100, (height/2.0f) + 240, 200, 50 };
+    Rectangle confirmNameBox = { width/2.0f + 115, (height/2.0f) + 240, 35, 50 };
+    Rectangle buttonBack = {100, 100, 100, 50};
+
+    bool mouseonText = false;
+    char name[MAX_INPUT_CHARS + 1] = "\0";
+    int letterCount = 0;
+    int framesCounter = 0;
+    json scorefile;
+
 };
 
 class Game{
