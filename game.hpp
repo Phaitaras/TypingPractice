@@ -55,7 +55,7 @@ public:
     void draw(std::vector<Texture2D> textures, Font font);
     Rectangle getButton1() { return buttonMode1; }
     Rectangle getButton2() { return buttonMode2; }
-    Rectangle getNameBox() {return nameBox;}
+    Rectangle getNameBox() { return nameBox; }
     char* getName() { return name; }
 
     bool mouseOnText(Rectangle textbox);
@@ -73,7 +73,6 @@ private:
     int letterCount = 0;
     int framesCounter = 0;
 
-
 };
 
 class GameScreen: public Screen{
@@ -86,8 +85,11 @@ public:
     void setCurrentWord(std::string w) { currentWord = w; }
     void setNextWord(std::string w) { nextWord = w; }
     void setIdleIndex(int i) { idleIndex = i; }
+    void setCharacterIndex(int i) { characterIndex = i; }
+    void setCharacterSelectMenu(bool b) { characterSelectMenu  = b; }
     bool typedLetter(char w);
     virtual void typedWord() = 0;
+    virtual void resetFrames() = 0;
     bool timesUp();
 
     //get
@@ -98,6 +100,7 @@ public:
     int getIdleIndex() { return idleIndex; }
     int getWordsTyped() { return wordTyped; }
     Rectangle getButtonNext() { return buttonNext; }
+    bool getCharacterSelectMenu() { return characterSelectMenu; }
 
     //add-reduct
     void framesCount() { --frames; }
@@ -105,9 +108,12 @@ public:
 
     void DrawWordOnScreen(std::string random_word, int typing_index, Font font);
     virtual void draw(std::vector<Texture2D> textures, Font font) = 0;
-    virtual void update(char key) = 0;
+    virtual void update(char key, std::vector<Sound> sounds) = 0;
     virtual void drawScore(std::vector<Texture2D> textures, Font font);
+    virtual void drawCharacterSelection(std::vector<Texture2D> textures, Font font);
 protected:
+    bool characterSelectMenu = true;
+    int characterIndex;
     int typingIndex;
     int idleIndex = 0;
     int wpm;
@@ -119,7 +125,6 @@ protected:
     std::string nextWord;
     std::vector<std::string> wordPool;
     Rectangle buttonNext = {(width/2.0f) - 100, (height/2.0f) + 100, 200, 50};
-    
 };
 
 class TypingTrials: public GameScreen{
@@ -127,8 +132,9 @@ public:
     TypingTrials();
     void typedWord();
     void draw(std::vector<Texture2D> textures, Font font);
-    void update(char key);
+    void update(char key, std::vector<Sound> sounds);
     void reset();
+    void resetFrames(){ frames = FRAME; }
 private:
     const int FRAME = 3600; //60sec
 };
@@ -138,8 +144,9 @@ public:
     TickingTimeBomb();
     void typedWord();
     void draw(std::vector<Texture2D> textures, Font font);
-    void update(char key);
+    void update(char key, std::vector<Sound> sounds);
     void reset();
+    void resetFrames(){ frames = FRAME; }
 private:
     const int FRAME = 480; //8sec
 };
@@ -157,8 +164,11 @@ protected:
     GameState gameState;
     std::vector<std::string> word_pool; // our 1000 word json
     std::vector<Texture2D> textures;
+    std::vector<Sound> sounds;
+    Music music;
     Font font;
     Image icon;
+
 };
 
 //class score

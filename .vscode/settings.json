@@ -86,6 +86,8 @@
         "forward_list": "cpp",
         "ranges": "cpp",
         "span": "cpp",
-        "valarray": "cpp"
+        "valarray": "cpp",
+        "format": "cpp",
+        "xhash": "cpp"
     }
 }

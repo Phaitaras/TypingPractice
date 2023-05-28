@@ -1,3 +1,34 @@
+DONE: 
+    1) JSON FILE READER
+    2) GAMEPLAY 
+    3) INHERITANCE GAMEMODES(Typing Trials, Ticking Time Bomb)
+    4) THEMES
+    5) MASCOTS
+    6) GAME name
+    7) TINY GAME icon
+    8) TITLE SCREEN
+    9) SCORE SCREEN
+    10) THIRD MODE: PRACTICE
+    11) BACKGROUND SCROLLING
+    12) AUDIO AND sfx
+TO DO:
+    1) SCOREBOARD
+        - use the JSON file reader
+    5) PAUSE SCREEN
+    6) FIX WPM FOR SECOND MODE
+    7) MEMORY MANAGEMENT????
+    8) CLASS DIAGRAM by MUSIC OHYEA
+
+
+
+
+
+
+
+
+
+
+
 To-do??
     1) Read
         - read .json file
@@ -51,24 +82,3 @@ To-do??
         - title screen, pause screen
         - typing sfx, music
 
-DONE: 
-    1) JSON FILE READER
-    2) GAMEPLAY 
-    3) INHERITANCE GAMEMODES(Typing Trials, Ticking Time Bomb)
-    4) THEMES
-    5) MASCOTS
-    6) GAME name
-    7) TINY GAME icon
-    8) TITLE SCREEN
-    9) SCORE SCREEN
-    10) THIRD MODE: PRACTICE
-    11)
-TO DO:
-    1) SCOREBOARD
-        - use the JSON file reader
-    2) BACKGROUND SCROLLING
-    3) AUDIO AND sfx
-    5) PAUSE SCREEN
-    6) FIX WPM FOR SECOND MODE
-    7) MEMORY MANAGEMENT????
-    8) CLASS DIAGRAM by MUSIC OHYEA

@@ -22,14 +22,35 @@ Game::Game(int width, int height, std::string title): width(width), height(heigh
     //init window
     assert(!GetWindowHandle()); //Check if window has not been created
     InitWindow(width, height, title.c_str()); 
+    InitAudioDevice();
     SetTargetFPS(60);
+
+    //audio
+    music = LoadMusicStream("../assets/sounds/bgmusic.wav");
+    PlayMusicStream(music);
+    SetMusicVolume(music, 0.65f);
+
+    Sound typeSound = LoadSound("../assets/sounds/clickCorrect.wav");
+    Sound wordCompleteSound = LoadSound("../assets/sounds/wordCorrect.wav");
+    Sound modeCompleteSound = LoadSound("../assets/sounds/win.wav");
+    Sound mouseClickSound = LoadSound("../assets/sounds/mousepik.wav");
+
+    sounds.push_back(typeSound);
+    sounds.push_back(wordCompleteSound);
+    sounds.push_back(modeCompleteSound);
+    sounds.push_back(mouseClickSound);
     
     //textures
-    Texture2D rabbit = LoadTexture("../assets/dubu.png");
-    Texture2D bear = LoadTexture("../assets/nongbear.png");
-    Texture2D background = LoadTexture("../assets/bg.png");
-    Texture2D stage = LoadTexture("../assets/stage.png");
+    Texture2D rabbit = LoadTexture("../assets/sprites/dubu.png");
+    Texture2D bear = LoadTexture("../assets/sprites/nongbear.png");
+    Texture2D background = LoadTexture("../assets/sprites/bg.png");
+    Texture2D stage = LoadTexture("../assets/sprites/stage.png");
     textures = {rabbit, bear, background, stage};
+
+    textures.push_back(rabbit);
+    textures.push_back(bear);
+    textures.push_back(background);
+    textures.push_back(stage);
 
     //fonts
     //font = LoadFontEx("../assets/rainyhearts.ttf", 30, 0, 0);
@@ -40,11 +61,11 @@ Game::Game(int width, int height, std::string title): width(width), height(heigh
     //init dictionary/wordpool
     ns::wordpool eng;
     this->word_pool = jsonVec(eng, "../words.json");
-
 }
 
 Game::~Game() noexcept {
     assert(GetWindowHandle()); //Check if there is a window
+    CloseAudioDevice();
     CloseWindow();
 }
 
@@ -58,6 +79,8 @@ const Color TEXT_BOX_COLOR = Color{227, 226, 254, 255};
 const Color TEXT_BOX_COLOR_HIGHLIGHTED = Color{180, 177, 255, 255};
 const Color TEXT_COLOR = Color{117, 79, 186, 255};
 const int TEXT_SPACING = 2;
+int backgroundPos = 0;
+int backgroundPos2 = 720;
 Rectangle source;
 
 Vector2 XYtoVector2(int x, int y){
@@ -120,7 +143,8 @@ void MainScreen::typingName(){
 void MainScreen::draw(std::vector<Texture2D> textures, Font font) {
     BeginDrawing();
         ClearBackground(WHITE);
-        DrawTexture(textures[2], 20, 0, Color{255, 255, 255, 75});
+        DrawTexture(textures[2], backgroundPos, backgroundPos - 8, Color{255, 255, 255, 75});
+        
         DrawTextEx(
             font, msg.c_str(),
             XYtoVector2(
@@ -225,7 +249,7 @@ void GameScreen::drawScore(std::vector<Texture2D> textures, Font font) {
         ClearBackground(WHITE);
 
         //bg
-        DrawTexture(textures[2], 20, 0, Color{255, 255, 255, 75}); 
+        DrawTexture(textures[2], backgroundPos, backgroundPos - 8, Color{255, 255, 255, 75});
         
         //bg rectangle
         DrawRectangle(
@@ -269,6 +293,31 @@ void GameScreen::drawScore(std::vector<Texture2D> textures, Font font) {
     EndDrawing();
 }
 
+void GameScreen::drawCharacterSelection(std::vector<Texture2D> textures, Font font){
+    BeginDrawing();
+    ClearBackground(Color{245, 240, 255, 255});
+
+    //background
+    DrawTexture(textures[2], backgroundPos, backgroundPos - 8, Color{255, 255, 255, 75});
+
+    //stage
+    DrawTexture(textures[3], 0, 0, WHITE);
+
+    //text
+    DrawTextEx(font, TextFormat("- SELECT YOUR TYPING FRIEND -"),
+        Vector2{width/2.0f - MeasureTextEx(font, TextFormat("- SELECT YOUR TYPING FRIEND -"), 36, 2).x/2.0f, 385},
+        36, TEXT_SPACING, WHITE);
+
+    source = Rectangle{idleIndex * TEXT_BOX_SIZE * 1.0f, 0.0f, 60.0f, 60.0f};
+
+    //rabbit
+    DrawTexturePro(textures[0], source, Rectangle{width/2.0f-270.0f, 125, source.width * 4, source.height * 4}, Vector2{0, 0}, 0, WHITE);
+
+    //bear
+    DrawTexturePro(textures[1], source, Rectangle{width/2.0f+30.0f, 125, source.width * 4, source.height * 4}, Vector2{0, 0}, 0, WHITE);
+    EndDrawing();
+}
+
 //Typing Trials functions
 TypingTrials::TypingTrials() : GameScreen() {
     frames = FRAME;
@@ -287,7 +336,7 @@ void TypingTrials::draw(std::vector<Texture2D> textures, Font font){
     ClearBackground(Color{245, 240, 255, 255});
 
     //background
-    DrawTexture(textures[2], 20, 0, Color{255, 255, 255, 75});
+    DrawTexture(textures[2], backgroundPos, backgroundPos - 8, Color{255, 255, 255, 75});
 
     //stage
     DrawTexture(textures[3], 0, 0, WHITE);
@@ -316,13 +365,13 @@ void TypingTrials::draw(std::vector<Texture2D> textures, Font font){
 
     DrawWordOnScreen(currentWord, typingIndex, font);
 
-    DrawTextureRec(textures[1], source, Vector2{
+    DrawTextureRec(textures[characterIndex], source, Vector2{
         ((GetScreenWidth()/2) + (TEXT_BOX_SIZE * 3/2 * (typingIndex)) - (TEXT_BOX_SIZE * 3/4 * currentWord.length() - TEXT_BOX_SIZE/4) * 1.0f)
         , 220}, WHITE);
     EndDrawing();
 }
 
-void TypingTrials::update(char key) {
+void TypingTrials::update(char key, std::vector<Sound> sounds) {
     framesCount();
     if (typedLetter(key)) {
         ++typingIndex;
@@ -333,6 +382,7 @@ void TypingTrials::update(char key) {
     }
 
     if(typingIndex >= currentWord.size()) {
+        PlaySound(sounds[1]);
         typedWord();
     } 
 }
@@ -344,6 +394,7 @@ void TypingTrials::reset() {
     wordTyped = 0;
     incorrectLetters = 0;
     lettersTyped = 0;
+    characterSelectMenu = true;
     currentWord = getRandomWord(wordPool);
     nextWord = getRandomWord(wordPool);
 }
@@ -360,9 +411,9 @@ void TickingTimeBomb::reset() {
     wordTyped = 0;
     incorrectLetters = 0;
     lettersTyped = 0;
+    characterSelectMenu = true;
     currentWord = getRandomWord(wordPool);
     nextWord = getRandomWord(wordPool);
-
 }
 
 void TickingTimeBomb::typedWord(){
@@ -373,7 +424,7 @@ void TickingTimeBomb::typedWord(){
     setNextWord(getRandomWord(wordPool));
 }
 
-void TickingTimeBomb::update(char key){
+void TickingTimeBomb::update(char key, std::vector<Sound> sounds){
     framesCount();
     if (typedLetter(key)) {
         ++lettersTyped;
@@ -383,6 +434,7 @@ void TickingTimeBomb::update(char key){
         ++incorrectLetters;
     }
     if(typingIndex >= currentWord.size()) {
+        PlaySound(sounds[1]);
         typedWord();
         frames = FRAME;
     } 
@@ -394,7 +446,7 @@ void TickingTimeBomb::draw(std::vector<Texture2D> textures, Font font){
     ClearBackground(Color{245, 240, 255, 255});
 
     //background
-    DrawTexture(textures[2], 20, 0, Color{255, 255, 255, 75});
+    DrawTexture(textures[2], backgroundPos, backgroundPos - 8, Color{255, 255, 255, 75});
 
     //stage
     DrawTexture(textures[3], 0, 0, WHITE);
@@ -423,7 +475,7 @@ void TickingTimeBomb::draw(std::vector<Texture2D> textures, Font font){
 
     DrawWordOnScreen(currentWord, typingIndex, font);
 
-    DrawTextureRec(textures[1], source, Vector2{
+    DrawTextureRec(textures[characterIndex], source, Vector2{
         ((GetScreenWidth()/2) + (TEXT_BOX_SIZE * 3/2 * (typingIndex)) - (TEXT_BOX_SIZE * 3/4 * currentWord.length() - TEXT_BOX_SIZE/4) * 1.0f)
         , 220}, WHITE);
     EndDrawing();
@@ -432,8 +484,16 @@ void TickingTimeBomb::draw(std::vector<Texture2D> textures, Font font){
 char key;
 
 void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen*>& modes) {
-    //Update all
-    //...
+//Update all
+    UpdateMusicStream(music);
+
+    //bg update
+    if (backgroundPos > -712){
+        backgroundPos--;
+    } else {
+        backgroundPos = 0;
+    }
+
     GameScreen* tt = modes[0];
     GameScreen* ttb = modes[1];
     MainScreen mainMenu = mains[0];
@@ -449,10 +509,12 @@ void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen*>& modes)
                 SetMouseCursor(MOUSE_CURSOR_DEFAULT);
             }
             if(mainMenu.buttonClicked(mainMenu.getButton1())){
+                PlaySound(sounds[3]);
                 gameState = mode1;
                 tt->reset();
             }
             if(mainMenu.buttonClicked(mainMenu.getButton2())){
+                PlaySound(sounds[3]);
                 gameState = mode2;
                 ttb->reset();
             }
@@ -466,21 +528,37 @@ void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen*>& modes)
 
         case mode1:
         // Update ----------------------------------------------------------------------------------
-            tt->update(GetCharPressed());
-
-            // frames -= 1
-            tt->framesCount();
+            tt->update(GetCharPressed(), sounds);
 
             //timer: 60 seconds (60fps)
-            if (tt->timesUp()){
-                if (tt->buttonClicked(tt->getButtonNext())){
+            if (tt->timesUp() && !tt->getCharacterSelectMenu()){
+                if (tt->buttonClicked(tt->getButtonNext())) {
                     gameState = endScreen;
+                    PlaySound(sounds[2]);
                 }
                 tt->drawScore(textures, font);
-            } else {
+
+            } else if (!tt->getCharacterSelectMenu()){
                 tt->draw(textures, font);
+                
+            } else {
+                //character selection
+                if (tt->buttonClicked(Rectangle{width/2.0f-270.0f, 125, source.width * 4, source.height * 4})){
+                    PlaySound(sounds[3]);
+                    tt->setCharacterIndex(0);
+                    tt->setCharacterSelectMenu(false);
+                    tt->resetFrames();
+                }
+                if (tt->buttonClicked(Rectangle{width/2.0f+30.0f, 125, source.width * 4, source.height * 4})){
+                    PlaySound(sounds[3]);
+                    tt->setCharacterIndex(1);
+                    tt->setCharacterSelectMenu(false);
+                    tt->resetFrames();
+                }
+                tt->drawCharacterSelection(textures, font);
             }
 
+            //character animation
             if (tt->getFrames() % 30 == 0 && tt->getIdleIndex() < 1){
                 tt->setIdleIndex(1);
             } else if (tt->getFrames() % 30 == 0 && tt->getIdleIndex() > 0){
@@ -494,19 +572,38 @@ void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen*>& modes)
 
         case mode2:
              // Update ----------------------------------------------------------------------------------
-            ttb->update(GetCharPressed());
+            ttb->update(GetCharPressed(), sounds);
+            std::cout << ttb->getFrames() % 30 << "\n";
 
-            // frames -= 1
-            ttb->framesCount();
-
-            //timer: 60 seconds (60fps)
-            if (ttb->timesUp()){
-                if (ttb->buttonClicked(ttb->getButtonNext())) gameState = endScreen;
+            //timer
+            if (ttb->timesUp() && !ttb->getCharacterSelectMenu()){
+                if (ttb->buttonClicked(ttb->getButtonNext())) {
+                    gameState = endScreen;
+                    PlaySound(sounds[2]);
+                }
                 ttb->drawScore(textures, font);
-            } else {
+
+            } else if (!ttb->getCharacterSelectMenu()){
                 ttb->draw(textures, font);
+                
+            } else {
+                //character selection
+                if (ttb->buttonClicked(Rectangle{width/2.0f-270.0f, 125, source.width * 4, source.height * 4})){
+                    PlaySound(sounds[3]);
+                    ttb->setCharacterIndex(0);
+                    ttb->setCharacterSelectMenu(false);
+                    ttb->resetFrames();
+                }
+                if (ttb->buttonClicked(Rectangle{width/2.0f+30.0f, 125, source.width * 4, source.height * 4})){
+                    PlaySound(sounds[3]);
+                    ttb->setCharacterIndex(1);
+                    ttb->setCharacterSelectMenu(false);
+                    ttb->resetFrames();
+                }
+                ttb->drawCharacterSelection(textures, font);
             }
 
+            //character animation
             if (ttb->getFrames() % 30 == 0 && ttb->getIdleIndex() < 1){
                 ttb->setIdleIndex(1);
             } else if (ttb->getFrames() % 30 == 0 && ttb->getIdleIndex() > 0){
@@ -516,17 +613,18 @@ void Game::Tick(std::vector<MainScreen>& mains, std::vector<GameScreen*>& modes)
             //force quit
             if (IsKeyPressed(KEY_LEFT_CONTROL)) gameState = endScreen;
 
-        // Drawing ---------------------------------------------------------------------------------
             break;
         
         case endScreen:
             if (end.buttonClicked(end.getButton1())){
+                PlaySound(sounds[3]);
                 gameState = mode1;
                 tt->reset();
                 // tt->setCurrentWord(modes[0]->getRandomWord(word_pool));
                 // tt->setNextWord(modes[0]->getRandomWord(word_pool));
             }
             if(end.buttonClicked(end.getButton2())){
+                PlaySound(sounds[3]);
                 gameState = mode2;
                 ttb->reset();
                 // ttb->setCurrentWord(modes[0]->getRandomWord(word_pool));
