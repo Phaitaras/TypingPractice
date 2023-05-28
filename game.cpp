@@ -301,11 +301,11 @@ void MainScreen::drawScoreBoard(std::vector<Texture2D> textures, Font font,const
 
 
 
-        int leaderboardWidth = 600.0f;
-        int leaderboardHeight = (numPlayers + 1.0f) * 30.0f + 50.0f; 
+        int leaderboardWidth = 600;
+        int leaderboardHeight = (numPlayers + 1) * 30 + 50; 
 
-        int leaderboardX = width/ 2.0f - leaderboardWidth / 2.0f;
-        int leaderboardY = height / 2.0f - leaderboardHeight / 2.0f;
+        int leaderboardX = width/ 2.0f - leaderboardWidth / 2;
+        int leaderboardY = height / 2.0f - leaderboardHeight / 2;
 
         Rectangle leaderboardRect{ leaderboardX, leaderboardY, leaderboardWidth, leaderboardHeight};
 
@@ -644,12 +644,9 @@ void TickingTimeBomb::draw(std::vector<Texture2D> textures, Font font){
     EndDrawing();
 }
 
-PracticeMode::PracticeMode() : GameScreen(){
-    frames = FRAME;
-}
+PracticeMode::PracticeMode() : GameScreen(){}
 
 void PracticeMode::reset(){
-    frames = FRAME;
     wpm = 0;
     typingIndex = 0;
     wordTyped = 0;
@@ -661,7 +658,6 @@ void PracticeMode::reset(){
 
 }
 void PracticeMode::update(char key, std::vector<Sound> sounds){
-    framesCount();
     if (typedLetter(key)) {
         ++lettersTyped;
         ++typingIndex;
@@ -686,33 +682,20 @@ void PracticeMode::draw(std::vector<Texture2D> textures, Font font){
     BeginDrawing();
     ClearBackground(Color{245, 240, 255, 255});
 
-    DrawTexture(textures[2], backgroundPos, backgroundPos - 8, Color{255, 255, 255, 75});
-    DrawRectangleRec(buttonBack, buttonClicked(buttonBack) ? WHITE : TEXT_COLOR);
-    DrawText("<--", buttonBack.x + 10, buttonBack.y + 10, 20, buttonClicked(buttonBack) ? TEXT_COLOR : WHITE);
-
     //background
     DrawTexture(textures[2], backgroundPos, backgroundPos - 8, Color{255, 255, 255, 75});
 
+    DrawTexture(textures[2], backgroundPos, backgroundPos - 8, Color{255, 255, 255, 75});
+    DrawRectangleRec(buttonBack, buttonClicked(buttonBack) ? WHITE : TEXT_COLOR);
+    DrawText("back", buttonBack.x + 10, buttonBack.y + 10, 20, buttonClicked(buttonBack) ? TEXT_COLOR : WHITE);
+
     //stage
     DrawTexture(textures[3], 0, 0, WHITE);
-
-    //timer bar
-    DrawRectangleLines(width/2 - 180, 420, 368, 28, WHITE);
-    DrawRectangle(width/2 - 176, 424, frames + 5, 20, WHITE);
 
     //next word
     DrawTextEx(font, 
         TextFormat("Next Word: %s", nextWord.c_str()),
         XYtoVector2(width/2 - MeasureText(TextFormat("Next Word: %s", nextWord.c_str()), 20)/2, height/2 + 25),
-        25, TEXT_SPACING, WHITE
-    );
-    //wpm
-    DrawTextEx(font, TextFormat("WPM: %d", wpm), XYtoVector2(width/2 - 180, height/2 + 100), 25, TEXT_SPACING, WHITE);
-    //count
-    DrawTextEx(font, 
-        TextFormat("Score: %d", wordTyped),
-        XYtoVector2(width/2 + 188 - (MeasureText(TextFormat("Score: %d", wordTyped), 25)/2),
-        height/2 + 100),
         25, TEXT_SPACING, WHITE
     );
 
@@ -786,7 +769,6 @@ void Game::Tick(std::vector<MainScreen*>& mains, std::vector<GameScreen*>& modes
 
 
             } else if (!tt->getCharacterSelectMenu()){
-                std::cout << mainMenu->getName();
                 tt->draw(textures, font);
                 
             } else {
@@ -867,11 +849,13 @@ void Game::Tick(std::vector<MainScreen*>& mains, std::vector<GameScreen*>& modes
             ptm->update(GetCharPressed(), sounds);
 
             //timer
-            if (!ttb->getCharacterSelectMenu()){
-                if (ptm->buttonClicked(ptm->getButtonBack())) gameState = titleScreen;
-                ptm->draw(textures, font);
-                
-            } else {
+            if (!ptm->getCharacterSelectMenu()){
+                if (ptm->buttonClicked(ptm->getButtonBack())){ 
+                    gameState = titleScreen;
+                    ptm->reset();
+                }
+                ptm->draw(textures, font);   
+            }else{
                 //character selection
                 if (ptm->buttonClicked(Rectangle{width/2.0f-270.0f, 125, source.width * 4, source.height * 4})){
                     PlaySound(sounds[3]);
@@ -889,7 +873,7 @@ void Game::Tick(std::vector<MainScreen*>& mains, std::vector<GameScreen*>& modes
             }
 
             //character animation
-            if (ptm->getFrames() % 30 == 0 && ttb->getIdleIndex() < 1){
+            if (ptm->getFrames() % 30 == 0 && ptm->getIdleIndex() < 1){
                 ptm->setIdleIndex(1);
             } else if (ptm->getFrames() % 30 == 0 && ptm->getIdleIndex() > 0){
                 ptm->setIdleIndex(0);

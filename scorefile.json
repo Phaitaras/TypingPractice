@@ -2,13 +2,18 @@
     "TickingTimeBomb": {
         "player": [
             {
-                "name": "fay",
-                "score": 25,
+                "name": "music",
+                "score": 10000,
                 "wpm": 0
             },
             {
-                "name": "fay",
-                "score": 12,
+                "name": "putter",
+                "score": 1000,
+                "wpm": 0
+            },
+            {
+                "name": "miki",
+                "score": 100,
                 "wpm": 0
             }
         ]
@@ -16,24 +21,19 @@
     "TypingTrials": {
         "player": [
             {
-                "name": "Unknown",
-                "score": 39,
-                "wpm": 39
+                "name": "putter",
+                "score": 1000,
+                "wpm": 999
             },
             {
-                "name": "Unknown",
+                "name": "music",
+                "score": 999,
+                "wpm": 1000
+            },
+            {
+                "name": "miki",
                 "score": 35,
                 "wpm": 35
-            },
-            {
-                "name": "Unknown",
-                "score": 35,
-                "wpm": 35
-            },
-            {
-                "name": "Unknown",
-                "score": 1,
-                "wpm": 23
             }
         ]
     }

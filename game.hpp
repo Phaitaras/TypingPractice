@@ -108,7 +108,7 @@ protected:
     std::string currentWord;
     std::string nextWord;
     std::vector<std::string> wordPool;
-    Rectangle buttonBack = {100, 100, 100, 50};
+    Rectangle buttonBack = {100, 100, 100, 45};
     Rectangle buttonNext = {(width/2.0f) - 100, (height/2.0f) + 100, 200, 50};
     Rectangle buttonScoreBoard = {(width/2.0f) - 100, (height/2.0f) + 250, 200, 50};
 
@@ -146,9 +146,8 @@ public:
     void draw(std::vector<Texture2D> textures, Font font);
     void update(char key, std::vector<Sound> sounds);
     void reset();
-    void resetFrames(){ frames = FRAME; }
+    void resetFrames(){ frames = 0; }
 private:
-    const int FRAME = 10000;
 };
 
 //screen for displaying messages or info
