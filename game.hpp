@@ -134,6 +134,7 @@ public:
     void update(char key, std::vector<Sound> sounds);
     void reset();
     void resetFrames(){ frames = FRAME; }
+    void addTotalFrames(){ ++totalframes; }
 private:
     const int FRAME = 300; // 5 sec
     int totalframes;
