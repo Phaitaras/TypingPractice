@@ -107,10 +107,8 @@ bool Screen::buttonClicked(Rectangle button) {
     return buttonPressed;
 }
 
+
 //MainScreen functions
-
-
-
 bool MainScreen::mouseOnText(Rectangle textbox){
     mouseonText = false;
     if (CheckCollisionPointRec(GetMousePosition(), textbox)) mouseonText = true;
@@ -124,12 +122,10 @@ void MainScreen::typingName(){
         int key = GetCharPressed();
 
         while (key > 0) {
-            std::cout << "key: " << key << std::endl;
             if ((key >= 32) && (key <= 125) && (letterCount < MAX_INPUT_CHARS)) {
                 name[letterCount] = (char)key;
                 name[letterCount + 1] = '\0'; // Add null terminator at the end of the string.
                 letterCount++;
-                std::cout << "name: " << name << std::endl;
             }
             key = GetCharPressed(); // Check next character in the queue
         }
@@ -285,8 +281,6 @@ void MainScreen::addPlayerData(GameScreen* gameScreen, std::string mode) {
 }
 
 
-
-
 void MainScreen::drawScoreBoard(std::vector<Texture2D> textures, Font font,std::string mode) {
     json jsonData = loadJsonFile();
     json playerData = jsonData[mode]["player"];
@@ -302,10 +296,10 @@ void MainScreen::drawScoreBoard(std::vector<Texture2D> textures, Font font,std::
         int leaderboardWidth = 600;
         int leaderboardHeight = (numPlayers + 1) * 30 + 50; 
 
-        int leaderboardX = width / 2.0f - leaderboardWidth / 2;
-        int leaderboardY = height / 2.0f - leaderboardHeight / 2;
+        int leaderboardX = width / 2 - leaderboardWidth / 2;
+        int leaderboardY = height / 2 - leaderboardHeight / 2;
 
-        Rectangle leaderboardRect{leaderboardX, leaderboardY, leaderboardWidth, leaderboardHeight};
+        Rectangle leaderboardRect{(float)leaderboardX, (float)leaderboardY, (float)leaderboardWidth, (float)leaderboardHeight};
 
         // Draw the background rectangle for the leaderboard
         DrawRectangleRec(leaderboardRect, TEXT_COLOR);
@@ -750,10 +744,7 @@ void Game::Tick(std::vector<MainScreen*>& mains, std::vector<GameScreen*>& modes
             if(mainMenu->buttonClicked(mainMenu->getPracticeButton())){
                 gameState = practicemode;
             }
-            //forcequit
-            // if (IsKeyPressed(KEY_LEFT_CONTROL)) {
-            //     gameState = endScreen;
-            // }
+
         // Drawing ---------------------------------------------------------------------------------
             BeginDrawing();
                 mainMenu->drawNameBox();
